@@ -1,0 +1,52 @@
+name: maslow_agents
+description: "A new Flutter project."
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons:
+  flutter_screen_lock:
+  image_picker: ^0.8.7+3
+  firebase_database:
+  firebase_core: ^3.1.1
+  cloud_firestore: ^5.0.2
+  file_picker:
+  firebase_storage:
+  image_picker_for_web:
+  google_sign_in:
+  firebase_auth:
+  shared_preferences:
+  google_fonts: ^4.0.3
+  intl:
+  http:
+  flutter_colorpicker:
+  flutter_markdown: ^0.7.3
+  image_cropper: ^7.1.0
+  uri:
+  url_strategy: ^0.2.0
+  dotted_border: ^2.0.0
+  socket_io_client: ^2.0.3+1
+  lottie: ^2.0.0
+  animated_text_kit:
+  shimmer: ^2.0.0
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/animations/
