@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:maslow_agents/utils/custom_snackbar.dart';
@@ -8,7 +7,6 @@ import '../../service/user_service.dart';
 import '../../utils/colors.dart';
 import '../agent_flows/agent_flow_model.dart';
 import '../common/key_value_list.dart';
-
 
 class AdminWorkspaceDialog extends StatefulWidget {
   AgentFlowModel? agentFlowModel;
@@ -28,11 +26,9 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
   final TextEditingController _descriptionController = TextEditingController();
   bool _showAuthSection = false;
   bool _isPublishedValue =false;
-  final TextEditingController _authHeaderKeyController =
-      TextEditingController();
-  final TextEditingController _confirmDeleteController =
-      TextEditingController();
+  final TextEditingController _authHeaderKeyController = TextEditingController();
   UserModel? currentUser;
+  bool _isAgentFlowPublic = false;
 
   final List<String> _categories = [
     'Education',
@@ -41,6 +37,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
     'Sports',
     'Uncategorized'
   ];
+
   String? _selectedCategory = 'uncategorized';
 
   @override
@@ -57,6 +54,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
       _descriptionController.text = widget.agentFlowModel?.description ?? "";
       _isPublishedValue = widget.agentFlowModel?.isPublished ?? false;
       _selectedCategory = widget.agentFlowModel?.category;
+      _isAgentFlowPublic = widget.agentFlowModel?.isPublic ?? false;
     }
   }
 
@@ -89,7 +87,6 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
   String? _btnText;
   String? workspaceText;
   String? dialogHeaderText;
-  bool _showConfirmDeleteField = false;
 
   void addWorkspace() async {
     String socketUrl = _socketsUrlController.text.trim();
@@ -114,9 +111,10 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
           updatedAt: Timestamp.now(),
           flowName: flowName,
           isPublished: _isPublishedValue,
+          isPublic: _isAgentFlowPublic,
           description: _descriptionController.text,
-        category: _selectedCategory ?? 'Uncategorized', // Default value if no category selected
-        authentication: Authentication(
+          category: _selectedCategory ?? 'Uncategorized', // Default value if no category selected
+          authentication: Authentication(
               key: authHeaderKey,
               token: headerToken,
               type: selectedTokenType ?? ""), );
@@ -125,7 +123,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
           .collection('marketplace')
           .add(agentFlowModel.toFirestore());
 
-      context.showCustomSnackBar('workspace added successfully');
+      context.showCustomSnackBar('Agent flow added successfully');
     }
 
     Navigator.pop(context);
@@ -155,6 +153,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
         flowName: flowName,
         createdAt: Timestamp.now(),
         isPublished: _isPublishedValue,
+        isPublic: _isAgentFlowPublic, // Updated
         description: _descriptionController.text,
         category: _selectedCategory ?? 'Uncategorized', // Default value if no category selected
         authentication: Authentication(
@@ -169,7 +168,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
           .doc(widget.flowDocumentId) // Specify the document ID
           .update(agentFlowModel.toFirestore());
 
-      context.showCustomSnackBar('workspace updated successfully');
+      context.showCustomSnackBar('Agent flow updated successfully');
     }
     Navigator.pop(context);
   }
@@ -200,7 +199,11 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                           decoration: const InputDecoration(
                             labelText: 'Name',
                             border: OutlineInputBorder(),
+                            labelStyle: TextStyle(
+                              fontSize: 12.0, // Adjust the font size of the label text
+                            ),
                           ),
+
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -208,6 +211,9 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                           decoration: const InputDecoration(
                             labelText: 'API URL',
                             border: OutlineInputBorder(),
+                            labelStyle: TextStyle(
+                              fontSize: 12.0, // Adjust the font size of the label text
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -216,6 +222,9 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                           decoration: const InputDecoration(
                             labelText: 'Socket URL',
                             border: OutlineInputBorder(),
+                            labelStyle: TextStyle(
+                              fontSize: 12.0, // Adjust the font size of the label text
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -224,12 +233,15 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                           decoration: const InputDecoration(
                             labelText: 'Description',
                             border: OutlineInputBorder(),
+                            labelStyle: TextStyle(
+                              fontSize: 12.0, // Adjust the font size of the label text
+                            ),
                           ),
                         ),
                         const SizedBox(height: 10),
                         const Text(
                           'Category',
-                          style: TextStyle(fontSize: 16),
+                          style: TextStyle(fontSize: 14),
                         ),
                         const SizedBox(height: 10),
                         Wrap(
@@ -269,7 +281,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                             );
                           }).toList(),
                         ),
-                        const SizedBox(height: 25),
+                        // const SizedBox(height: 25),
                       ],
                     ),
                   ),
@@ -299,6 +311,37 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                   )
                 ],
               ),
+              const SizedBox(height: 10,),
+              Row(
+                children: [
+                  const Text(
+                    'Workspace Type: ',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  Radio<bool>(
+                    value: true,
+                    groupValue: _isAgentFlowPublic,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _isAgentFlowPublic = value ?? false;
+                      });
+                    },
+                  ),
+                  const Text('Public'),
+                  const SizedBox(width: 20),
+                  Radio<bool>(
+                    value: false,
+                    groupValue: _isAgentFlowPublic,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _isAgentFlowPublic = value ?? true;
+                      });
+                    },
+                  ),
+                  const Text('Private'),
+                ],
+              ),
+              const SizedBox(height: 5,),
               Row(
                 children: [
                   Checkbox(
@@ -312,7 +355,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                   const Text('Publish'),
                 ],
               ),
-              const SizedBox(height: 10,),
+              const SizedBox(height: 5,),
               Row(
                 children: [
                   Checkbox(

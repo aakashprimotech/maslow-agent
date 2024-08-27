@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
+import 'package:maslow_agents/utils/custom_snackbar.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../utils/colors.dart';
+import '../admin/admin_workspace_dialog.dart';
 import '../agent_flows/agent_flow_model.dart';
 import '../agent_flows/agent_flow_screen.dart';
 
@@ -16,7 +17,7 @@ class UsersMarketplaceScreen extends StatefulWidget {
 
 class _UsersMarketplaceScreenState extends State<UsersMarketplaceScreen> {
   String _searchText = "";
-  String? _selectedCategory; // Track the selected category
+  String? _selectedCategory;
   final TextEditingController _searchController = TextEditingController();
 
   final List<String> _categories = [
@@ -41,6 +42,44 @@ class _UsersMarketplaceScreenState extends State<UsersMarketplaceScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  _deleteAgentFlowDialog(String documentId,BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          content: const Text("Are you sure you want to delete agent flow?"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text("Delete"),
+              onPressed: () async {
+                try {
+                  await FirebaseFirestore.instance
+                      .collection('marketplace')
+                      .doc(documentId) // Specify the document ID
+                      .delete();
+
+                  Navigator.pop(context);
+                  context.showCustomSnackBar('Agent flow deleted successfully');
+                } catch (e) {
+                  context.showCustomSnackBar('Failed to delete document');
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // Function to filter the agentFlows list based on the search query and selected category
@@ -105,26 +144,11 @@ class _UsersMarketplaceScreenState extends State<UsersMarketplaceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        surfaceTintColor: Colors.transparent,
-        elevation: 5,
-        backgroundColor: AppColors.messageBgColor.withAlpha(50),
-        title: Row(
-          children: [
-            Image.asset('assets/images/maslow_icon.png', height: 22, width: 22),
-            const SizedBox(width: 10),
-            const Text(
-              "Marketplace",
-              style: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
+
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Container(color: AppColors.textFieldBorderColor, height: 1),
-            const SizedBox(height: 35.0),
+            const SizedBox(height: 20.0),
             const Text(
               'Agents',
               style: TextStyle(
@@ -144,7 +168,7 @@ class _UsersMarketplaceScreenState extends State<UsersMarketplaceScreen> {
             ),
             const SizedBox(height: 30.0),
             Container(
-              margin: const EdgeInsets.fromLTRB(130, 0, 130, 0),
+              margin: const EdgeInsets.fromLTRB(30, 0, 30, 0),
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
@@ -178,8 +202,7 @@ class _UsersMarketplaceScreenState extends State<UsersMarketplaceScreen> {
               ),
             ),
             const SizedBox(height: 20.0),
-            Container(
-              margin: const EdgeInsets.fromLTRB(100, 0, 100, 0),
+            SizedBox(
               height: MediaQuery.of(context).size.height * 0.7,
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance.collection('marketplace').snapshots(),
@@ -257,6 +280,7 @@ class _UsersMarketplaceScreenState extends State<UsersMarketplaceScreen> {
                       itemCount: filteredAgentFlows.length,
                       itemBuilder: (context, index) {
                         var agentFlow = filteredAgentFlows[index];
+                        final doc = snapshot.data!.docs[index];
 
                         return Container(
                           padding: const EdgeInsets.all(12.0),
@@ -301,6 +325,34 @@ class _UsersMarketplaceScreenState extends State<UsersMarketplaceScreen> {
                                   const Spacer(),
                                 ],
                               ),
+                              Positioned(
+                              left: 0,
+                              bottom: 0,
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    onPressed: () {
+                                      _deleteAgentFlowDialog(doc.id, context);
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () {
+                                      showDialog<void>(
+                                        context: context,
+                                        builder: (context) {
+                                          return AdminWorkspaceDialog(
+                                            agentFlowModel: agentFlow,
+                                            flowDocumentId: doc.id,
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
                               Positioned(
                                 right: 0,
                                 bottom: 0,

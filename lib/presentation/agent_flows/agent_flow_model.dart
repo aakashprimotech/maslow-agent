@@ -9,6 +9,7 @@ class AgentFlowModel {
   final Timestamp updatedAt;
   final String description;
   final bool isPublished;
+  final bool isPublic;
   final String category;
   final Authentication authentication;
 
@@ -22,6 +23,7 @@ class AgentFlowModel {
     this.description = '',
     this.category = '',
     this.isPublished = false,
+    this.isPublic  = false,
     required this.authentication,
   });
 
@@ -39,6 +41,7 @@ class AgentFlowModel {
       description: data['description'] ?? '',
       category: data['category'] ?? '',
       isPublished: data['isPublished'] ?? false,
+      isPublic : data['isPublic'] ?? false,
       authentication: Authentication.fromMap(data['authentication'] as Map<String, dynamic>),
     );
   }
@@ -55,6 +58,7 @@ class AgentFlowModel {
       'description': description,
       'category': category,
       'isPublished': isPublished,
+      'isPublic': isPublic,
       'authentication': authentication.toMap(),
     };
   }

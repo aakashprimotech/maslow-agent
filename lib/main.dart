@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
 
             initialRoute: '/',
             routes: {
-              '/' : (context) => const LoginScreen(),
+              '/' : (context) => const AdminLoginScreen(),
             },
           );
         }
@@ -68,6 +68,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return isLoggedIn ? const AdminHomePage() : const LoginScreen();
+    return isLoggedIn ? const AdminHomePage() : const AdminLoginScreen();
   }
 }

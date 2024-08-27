@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:maslow_agents/presentation/admin/agents_page.dart';
+import 'package:maslow_agents/presentation/users_marketplace/users_marketplace_screen.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
 
 import '../../model/user.dart';
 import '../../service/shared_pref_service.dart';
 import '../../utils/colors.dart';
+import '../notification/notification_screen.dart';
 import 'admin_users.dart';
 import 'admin_workspace_dialog.dart';
 
@@ -36,12 +38,12 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   final List<IconData> _pageIcons = [
     Icons.home, // Workspace icon     // Logout icon
-    // Icons.person,          // User icon
+    Icons.person,          // User icon
   ];
 
   final List<String> _pageTitles = [
     'Home',
-    // 'Users',
+    'Users',
   ];
 
   void _onItemTapped(int index) {
@@ -56,7 +58,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        backgroundColor: AppColors.messageBgColor.withAlpha(50), // Use appropriate color
+        backgroundColor: AppColors.messageBgColor.withAlpha(50),
         title: Row(
           children: [
             Image.asset('assets/images/maslow_icon.png', height: 22, width: 22),
@@ -71,7 +73,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           ],
         ),
         actions: [
-          false ?
+          _selectedIndex ==0 ?
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             child: InkWell(
@@ -85,7 +87,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               },
               child: Container(
                 height: 30,
-                margin: const EdgeInsets.only(right: 10),
+
                 decoration: const BoxDecoration(
                   color: AppColors.createWorkspaceAppBarBtnColor,
                   borderRadius: BorderRadius.all(
@@ -93,7 +95,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   ),
                 ),
                 child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  padding: EdgeInsets.symmetric(horizontal: 15),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -117,6 +119,33 @@ class _AdminHomePageState extends State<AdminHomePage> {
               ),
             ),
           ) : const SizedBox(),
+          Container(
+            alignment: Alignment.center,
+            height: 30,
+            width: 30,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: const BoxDecoration(
+              color: AppColors.messageBgColor,
+              borderRadius: BorderRadius.all(
+                Radius.circular(5),
+              ),
+            ),
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationScreen(),
+                  ),
+                );
+              },
+              child: const Icon(
+                Icons.notifications_none_outlined,
+                size: 20,
+                color: AppColors.primaryColor,
+              ),
+            ),
+          ),
           Container(
             alignment: Alignment.center,
             margin: const EdgeInsets.only(right: 32),
@@ -147,7 +176,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               children: [
                 Container(
                   width: 250,
-                  margin: const EdgeInsets.only(top: 10),
+                  padding: const EdgeInsets.only(top: 10),
                   color: AppColors.messageBgColor.withAlpha(50),
                   child: ListView.builder(
                     itemCount: _pageTitles.length,
@@ -193,7 +222,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   child: Container(
                     alignment: Alignment.topCenter,
                     color: AppColors.backgroundColor,
-                    padding: const EdgeInsets.all(16.0),
                     child: _getPage(_selectedIndex),
                   ),
                 ),
@@ -208,7 +236,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return const AgentsPage();
+        return const UsersMarketplaceScreen();
       case 1:
         return AdminUsersPage();
       default:
