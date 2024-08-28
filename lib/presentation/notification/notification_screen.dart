@@ -43,8 +43,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
         children: [
           Container(color: AppColors.textFieldBorderColor, height: 1,),
           Expanded(
-            child: Container(alignment: Alignment.center,
-            child: const NothingToShow(),),
+            child: Container(
+              alignment: Alignment.center,
+              child: const NothingToShow(),
+            ),
           ),
         ],
       ),

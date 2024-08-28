@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'agents_data_response.dart';
+
 class AgentFlowModel {
   final String flowName;
   final DocumentReference createdBy;
@@ -12,6 +14,8 @@ class AgentFlowModel {
   final bool isPublic;
   final String category;
   final Authentication authentication;
+  String? dummyQuestion;
+  List<AgentReasoning>? dummyAnswer;
 
   AgentFlowModel({
     required this.flowName,
@@ -23,11 +27,12 @@ class AgentFlowModel {
     this.description = '',
     this.category = '',
     this.isPublished = false,
-    this.isPublic  = false,
+    this.isPublic = false,
     required this.authentication,
+    this.dummyQuestion,
+    this.dummyAnswer,
   });
 
-  // Factory constructor to create an instance from a Firestore document snapshot
   factory AgentFlowModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 
@@ -41,12 +46,16 @@ class AgentFlowModel {
       description: data['description'] ?? '',
       category: data['category'] ?? '',
       isPublished: data['isPublished'] ?? false,
-      isPublic : data['isPublic'] ?? false,
+      isPublic: data['isPublic'] ?? false,
       authentication: Authentication.fromMap(data['authentication'] as Map<String, dynamic>),
+      dummyQuestion: data['dummyQuestion'] as String?,
+      // Map the dynamic list to AgentReasoning objects
+      dummyAnswer: (data['dummyAnswer'] as List<dynamic>?)
+          ?.map((item) => AgentReasoning.fromJson(item as Map<String, dynamic>))
+          .toList(),
     );
   }
 
-  // Method to convert an instance to a map for saving to Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'flowName': flowName,
@@ -60,6 +69,8 @@ class AgentFlowModel {
       'isPublished': isPublished,
       'isPublic': isPublic,
       'authentication': authentication.toMap(),
+      'dummyQuestion': dummyQuestion,
+      'dummyAnswer': dummyAnswer?.map((item) => item.toJson()).toList(),
     };
   }
 }

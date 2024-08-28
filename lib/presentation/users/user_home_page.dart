@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:maslow_agents/presentation/users_marketplace/users_marketplace_screen.dart';
+import 'package:maslow_agents/presentation/users/user_agents_page.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
 
 import '../../model/user.dart';
 import '../../service/shared_pref_service.dart';
 import '../../utils/colors.dart';
 import '../notification/notification_screen.dart';
-import 'admin_users.dart';
-import 'admin_workspace_dialog.dart';
 
-class AdminHomePage extends StatefulWidget {
-  const AdminHomePage({super.key});
+class UserHomePage extends StatefulWidget {
+  const UserHomePage({super.key});
 
   @override
-  State<AdminHomePage> createState() => _AdminHomePageState();
+  State<UserHomePage> createState() => _UserHomePageState();
 }
 
-class _AdminHomePageState extends State<AdminHomePage> {
+class _UserHomePageState extends State<UserHomePage> {
   int _selectedIndex = 0;
   UserModel? currentUser;
 
@@ -35,12 +33,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   final List<IconData> _pageIcons = [
     Icons.home,
-    Icons.person,
   ];
 
   final List<String> _pageTitles = [
     'Home',
-    'Users',
   ];
 
   void _onItemTapped(int index) {
@@ -70,51 +66,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
           ],
         ),
         actions: [
-          _selectedIndex ==0 ?
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            child: InkWell(
-              onTap: () {
-                showDialog<void>(
-                  context: context,
-                  builder: (context) {
-                    return AdminWorkspaceDialog();
-                  },
-                );
-              },
-              child: Container(
-                height: 30,
-                decoration: const BoxDecoration(
-                  color: AppColors.createWorkspaceAppBarBtnColor,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(5),
-                  ),
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Create Agent Flow',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(width: 5),
-                      Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ) : const SizedBox(),
           Container(
             alignment: Alignment.center,
             height: 30,
@@ -232,9 +183,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return const UsersMarketplaceScreen();
-      case 1:
-        return const AdminUsersPage();
+        return const UserAgentsPage();
       default:
         return const Center(child: Text('Logout Page'));
     }

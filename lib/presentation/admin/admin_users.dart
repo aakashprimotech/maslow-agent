@@ -7,6 +7,8 @@ import '../../utils/colors.dart';
 import '../common/nothing_to_show.dart';
 
 class AdminUsersPage extends StatefulWidget {
+  const AdminUsersPage({super.key});
+
   @override
   _AdminUsersPageState createState() => _AdminUsersPageState();
 }

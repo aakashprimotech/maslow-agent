@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:maslow_agents/presentation/admin/admin_home.dart';
 import 'package:maslow_agents/presentation/auth/signup.dart';
+import 'package:maslow_agents/presentation/users/user_home_page.dart';
 import 'package:maslow_agents/utils/custom_snackbar.dart';
 
 import '../../../service/shared_pref_service.dart';
@@ -87,13 +88,12 @@ class _LoginScreenState extends State<LoginScreen> {
           uid: userCredential.user?.uid ?? '',
           name: userData['displayName'] ?? '',
           email: userCredential.user?.email ?? '',
-          primaryWorkSpace:
-              (userData['primaryWorkSpace'] as DocumentReference?)?.id,
+          primaryWorkSpace: (userData['primaryWorkSpace'] as DocumentReference?)?.id,
         ));
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const AdminHomePage()),
+          MaterialPageRoute(builder: (context) => const UserHomePage()),
         );
       }
     } catch (e) {

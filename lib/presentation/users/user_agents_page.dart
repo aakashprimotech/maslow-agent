@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
@@ -11,10 +10,10 @@ import '../../utils/colors.dart';
 import '../agent_flows/agent_flow_model.dart';
 import '../agent_flows/agent_flow_screen.dart';
 import '../common/nothing_to_show.dart';
-import 'admin_workspace_dialog.dart';
+import '../admin/admin_workspace_dialog.dart';
 
-class AgentsPage extends StatelessWidget {
-  const AgentsPage({super.key});
+class UserAgentsPage extends StatelessWidget {
+  const UserAgentsPage({super.key});
 
   _deleteAgentFlowDialog(String documentId,BuildContext context) {
     return showDialog(
@@ -64,7 +63,7 @@ class AgentsPage extends StatelessWidget {
           children: [
             const SizedBox(height: 20.0),
             const Text(
-              'Agents',
+              'Marketplace',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -192,34 +191,6 @@ class AgentsPage extends StatelessWidget {
                                 const Spacer(),
                               ],
                             ),
-                            /*Positioned(
-                              left: 0,
-                              bottom: 0,
-                              child: Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    onPressed: () {
-                                      _deleteAgentFlowDialog(doc.id, context);
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () {
-                                      showDialog<void>(
-                                        context: context,
-                                        builder: (context) {
-                                          return AdminWorkspaceDialog(
-                                            agentFlowModel: agentFlow,
-                                            flowDocumentId: doc.id,
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),*/
                             Positioned(
                               right: 0,
                               bottom: 0,
@@ -230,6 +201,7 @@ class AgentsPage extends StatelessWidget {
                                     MaterialPageRoute(
                                       builder: (context) => AgentFlowScreen(
                                         agentFlowModel: agentFlow,
+                                        marketplaceReference: doc.reference,
                                       ),
                                     ),
                                   );
@@ -278,196 +250,135 @@ class AgentsPage extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            Container(
+        Expanded(
+          child: Container(alignment: Alignment.center,
+            child: const Text(
+                  'Feature coming soon!',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16,color: Colors.black54),
+                ),
+              ),
+        )
+        /*    Container(
               margin: const EdgeInsets.only(top: 20),
-              height: 170, // Adjust height as needed
-              child: Row(
-                children: [
-                  Container(
-                      width: 280.0,
-                      height: 170,
-                      padding: const EdgeInsets.all(12.0), // Reduced padding
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8.0),
-                        border: Border.all(color: Colors.grey.shade300), // Added border
-                      ),
-                      child: InkWell(
-                        onTap: (){
-                          showDialog<void>(
-                            context: context,
-                            builder: (context) {
-                              return AdminWorkspaceDialog();
-                            },
-                          );
-                        },
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(padding: const EdgeInsets.all(15),  decoration: BoxDecoration(
-                              color: AppColors.messageBgColor,
-                              borderRadius: BorderRadius.circular(100.0),
-                              // Added border
-                            ),child: const Icon(Icons.add,color: AppColors.primaryColor,)),
-                            const SizedBox(height: 5,),
-                            const Text(
-                              'Add new Agent flow',
-                              style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600),
-                            )
-                          ],
+              height: 170,
+              child: Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('agent_flow')
+                      .where("createdBy", isEqualTo: UserService().getUserReference())
+                      .orderBy("updatedAt", descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryColor,
                         ),
-                      )
-                  ),
-                  Expanded(
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('agent_flow')
-                          .where("createdBy", isEqualTo: UserService().getUserReference())
-                          .orderBy("updatedAt", descending: true)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.primaryColor,
-                            ),
-                          );
-                        } else if (snapshot.hasError) {
-                          return const Center(child: Text('Error fetching data'));
-                        } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return const NothingToShow();
-                        }
+                      );
+                    } else if (snapshot.hasError) {
+                      return const Center(child: Text('Error fetching data'));
+                    } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const NothingToShow();
+                    }
 
-                        return ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: snapshot.data!.docs.length,
-                          itemBuilder: (context, index) {
-                            final doc = snapshot.data!.docs[index];
-                            AgentFlowModel agentFlowModel =
-                            AgentFlowModel.fromFirestore(doc);
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        final doc = snapshot.data!.docs[index];
+                        AgentFlowModel agentFlowModel =
+                        AgentFlowModel.fromFirestore(doc);
 
-                            return Container(
-                              width: 280.0,
-                              height: 100,
-                              margin: const EdgeInsets.only(right: 8),
-                              padding: const EdgeInsets.all(12.0), // Reduced padding
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8.0),
-                                border: Border.all(color: Colors.grey.shade300), // Added border
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                        return Container(
+                          width: 280.0,
+                          height: 100,
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.all(12.0), // Reduced padding
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: Colors.grey.shade300), // Added border
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        agentFlowModel.flowName.capitalize() ?? "N/A",
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      if (agentFlowModel.category != "Uncategorized")
-                                        Text(
-                                          agentFlowModel.category.capitalize() ?? "N/A",
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF40bc92),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4.0),
                                   Text(
-                                    agentFlowModel.description,
-                                    maxLines: 4,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12),
+                                    agentFlowModel.flowName.capitalize() ?? "N/A",
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                  const SizedBox(height: 10,),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.delete),
-                                            onPressed: () {
-                                              _deleteAgentFlowDialog(doc.id, context);
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.edit),
-                                            onPressed: () {
-                                              showDialog<void>(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AdminWorkspaceDialog(
-                                                      agentFlowModel: agentFlowModel,
-                                                      flowDocumentId: doc.id);
-                                                },
-                                              );
-                                            },
-                                          ),
-                                        ],
+                                  if (agentFlowModel.category != "Uncategorized")
+                                    Text(
+                                      agentFlowModel.category.capitalize() ?? "N/A",
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF40bc92),
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      InkWell(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => AgentFlowScreen(
-                                                agentFlowModel: agentFlowModel,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        child: Container(
-                                          height: 30,
-                                          alignment: Alignment.center,
-                                          width: 80,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF40bc92),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.grey.withOpacity(0.2),
-                                                spreadRadius: 3,
-                                                blurRadius: 7,
-                                                offset: const Offset(0, 1), // changes position of shadow
-                                              ),
-                                            ],
-                                            borderRadius: const BorderRadius.all(
-                                              Radius.circular(10),
-                                            ),
-                                          ),
-                                          padding: const EdgeInsets.all(5),
-                                          child: const Text(
-                                            'Chat',
-                                            style: TextStyle(fontSize: 14, color: Colors.white),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
                                 ],
                               ),
-                            );
-                          },
+                              const SizedBox(height: 4.0),
+                              Text(
+                                agentFlowModel.description,
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              const SizedBox(height: 10,),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AgentFlowScreen(
+                                          agentFlowModel: agentFlowModel,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    height: 30,
+                                    alignment: Alignment.center,
+                                    width: 80,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF40bc92),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.2),
+                                          spreadRadius: 3,
+                                          blurRadius: 7,
+                                          offset: const Offset(0, 1), // changes position of shadow
+                                        ),
+                                      ],
+                                      borderRadius: const BorderRadius.all(
+                                        Radius.circular(10),
+                                      ),
+                                    ),
+                                    padding: const EdgeInsets.all(5),
+                                    child: const Text(
+                                      'Chat',
+                                      style: TextStyle(fontSize: 14, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
-                    ),
-                  ),
-                ],
+                    );
+                  },
+                ),
               ),
-            ),
+            ),*/
           ],
         ),
       ),
