@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:maslow_agents/presentation/admin/admin_home.dart';
 import 'package:maslow_agents/presentation/admin/admin_login.dart';
 import 'package:maslow_agents/presentation/auth/login.dart';
+import 'package:maslow_agents/presentation/users/user_home_page.dart';
+import 'package:maslow_agents/service/shared_pref_service.dart';
 import 'package:maslow_agents/utils/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_strategy/url_strategy.dart';
+
+import 'model/user.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,14 +91,38 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final bool isLoggedIn;
 
   const HomeScreen({super.key, required this.isLoggedIn});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  UserModel? currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentUser();
+  }
+
+  Future<void> _getCurrentUser() async {
+    currentUser = await SessionManager.getUser();
+    if (currentUser != null) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return isLoggedIn ? const AdminHomePage() : const LoginScreen();
+    return widget.isLoggedIn
+        ? currentUser?.authType != 'user'
+            ? const AdminHomePage()
+            : const UserHomePage()
+        :  const LoginScreen();
   }
 }
 

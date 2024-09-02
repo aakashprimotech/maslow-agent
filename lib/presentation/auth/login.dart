@@ -55,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: userCredential.user?.email ?? '',
         primaryWorkSpace:
         (userData['primaryWorkSpace'] as DocumentReference?)?.id,
+        authType: 'user'
       ));
       return userCredential.user;
     } catch (e) {
@@ -88,6 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
           uid: userCredential.user?.uid ?? '',
           name: userData['displayName'] ?? '',
           email: userCredential.user?.email ?? '',
+          authType: 'user',
           primaryWorkSpace: (userData['primaryWorkSpace'] as DocumentReference?)?.id,
         ));
 

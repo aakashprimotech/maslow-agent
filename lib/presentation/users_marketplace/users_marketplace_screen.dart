@@ -263,7 +263,6 @@ class _UsersMarketplaceScreenState extends State<UsersMarketplaceScreen> {
                     return AgentFlowModel.fromFirestore(doc);
                   }).toList();
 
-                  // Filter the agentFlows list based on the search query and selected category
                   var filteredAgentFlows = _filterAgentFlows(agentFlows);
 
                   return Padding(
@@ -361,6 +360,7 @@ class _UsersMarketplaceScreenState extends State<UsersMarketplaceScreen> {
                                       MaterialPageRoute(
                                         builder: (context) => AgentFlowScreen(
                                           agentFlowModel: agentFlow,
+                                          marketplaceReference: doc.reference,
                                         ),
                                       ),
                                     );

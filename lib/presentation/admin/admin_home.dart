@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maslow_agents/presentation/admin/admin_login.dart';
 import 'package:maslow_agents/presentation/users_marketplace/users_marketplace_screen.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
 
@@ -262,8 +263,11 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 setState(() {
                   SessionManager.clearUser();
                 });
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/', (Route<dynamic> route) => false);
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
+                      (Route<dynamic> route) => false, // This will remove all previous routes
+                );
               },
               child: Container(
                 height: 30,

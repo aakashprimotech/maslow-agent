@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maslow_agents/presentation/auth/login.dart';
 import 'package:maslow_agents/presentation/users/user_agents_page.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
 
@@ -211,8 +212,11 @@ class _UserHomePageState extends State<UserHomePage> {
                 setState(() {
                   SessionManager.clearUser();
                 });
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/', (Route<dynamic> route) => false);
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      (Route<dynamic> route) => false, // This will remove all previous routes
+                );
               },
               child: Container(
                 height: 30,

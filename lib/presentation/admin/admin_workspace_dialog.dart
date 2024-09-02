@@ -25,10 +25,10 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
   final TextEditingController _tokenHeader = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   bool _showAuthSection = false;
-  bool _isPublishedValue =false;
+  bool _showInMarketplace =true;
   final TextEditingController _authHeaderKeyController = TextEditingController();
   UserModel? currentUser;
-  bool _isAgentFlowPublic = false;
+  // bool _isAgentFlowPublic = false;
 
   final List<String> _categories = [
     'Education',
@@ -52,9 +52,9 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
       _tokenHeader.text = widget.agentFlowModel?.authentication.token ?? "";
       _authHeaderKeyController.text = widget.agentFlowModel?.authentication.key ?? "";
       _descriptionController.text = widget.agentFlowModel?.description ?? "";
-      _isPublishedValue = widget.agentFlowModel?.isPublished ?? false;
+      _showInMarketplace = widget.agentFlowModel?.isPublished ?? false;
       _selectedCategory = widget.agentFlowModel?.category;
-      _isAgentFlowPublic = widget.agentFlowModel?.isPublic ?? false;
+      // _isAgentFlowPublic = widget.agentFlowModel?.isPublic ?? false;
     }
   }
 
@@ -110,8 +110,8 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
           flowName: flowName,
-          isPublished: _isPublishedValue,
-          isPublic: _isAgentFlowPublic,
+          isPublished: _showInMarketplace,
+          // isPublic: _isAgentFlowPublic,
           description: _descriptionController.text,
           category: _selectedCategory ?? 'Uncategorized', // Default value if no category selected
           authentication: Authentication(
@@ -152,10 +152,10 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
         updatedAt: Timestamp.now(),
         flowName: flowName,
         createdAt: Timestamp.now(),
-        isPublished: _isPublishedValue,
-        isPublic: _isAgentFlowPublic, // Updated
+        isPublished: _showInMarketplace,
+        // isPublic: _isAgentFlowPublic,
         description: _descriptionController.text,
-        category: _selectedCategory ?? 'Uncategorized', // Default value if no category selected
+        category: _selectedCategory ?? 'Uncategorized',
         authentication: Authentication(
           key: authHeaderKey,
           token: headerToken,
@@ -165,7 +165,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
 
       await FirebaseFirestore.instance
           .collection('marketplace')
-          .doc(widget.flowDocumentId) // Specify the document ID
+          .doc(widget.flowDocumentId)
           .update(agentFlowModel.toFirestore());
 
       context.showCustomSnackBar('Agent flow updated successfully');
@@ -312,6 +312,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                 ],
               ),
               const SizedBox(height: 10,),
+/*
               Row(
                 children: [
                   const Text(
@@ -341,18 +342,19 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                   const Text('Private'),
                 ],
               ),
+*/
               const SizedBox(height: 5,),
               Row(
                 children: [
                   Checkbox(
-                    value: _isPublishedValue,
+                    value: _showInMarketplace,
                     onChanged: (bool? value) {
                       setState(() {
-                        _isPublishedValue = value ?? false;
+                        _showInMarketplace = value ?? false;
                       });
                     },
                   ),
-                  const Text('Publish'),
+                  const Text('Show in marketplace'),
                 ],
               ),
               const SizedBox(height: 5,),

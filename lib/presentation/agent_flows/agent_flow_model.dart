@@ -16,6 +16,8 @@ class AgentFlowModel {
   final Authentication authentication;
   String? dummyQuestion;
   List<AgentReasoning>? dummyAnswer;
+  List<dynamic>? marketplaceUsers;
+
 
   AgentFlowModel({
     required this.flowName,
@@ -31,6 +33,8 @@ class AgentFlowModel {
     required this.authentication,
     this.dummyQuestion,
     this.dummyAnswer,
+    this.marketplaceUsers,
+
   });
 
   factory AgentFlowModel.fromFirestore(DocumentSnapshot doc) {
@@ -53,6 +57,8 @@ class AgentFlowModel {
       dummyAnswer: (data['dummyAnswer'] as List<dynamic>?)
           ?.map((item) => AgentReasoning.fromJson(item as Map<String, dynamic>))
           .toList(),
+      marketplaceUsers: data['marketplaceUsers'] as List<dynamic>?,
+
     );
   }
 

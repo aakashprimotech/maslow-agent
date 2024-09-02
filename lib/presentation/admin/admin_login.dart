@@ -48,6 +48,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           uid: userCredential.user?.uid ?? '',
           name: userData['displayName'] ?? '',
           email: userCredential.user?.email ?? '',
+          authType: 'admin'
         ));
 
         Navigator.pushReplacement(

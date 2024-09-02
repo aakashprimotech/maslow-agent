@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppLogoHorizontal extends StatelessWidget {
   const AppLogoHorizontal({
     super.key,
-    this.fontSize = 50,
+    this.fontSize = 40,
     this.fontWeight = FontWeight.w600,
     this.gradientColors = const [Color(0xFFF53A9F), Color(0xFF18AF9E)],
   });
@@ -25,12 +25,11 @@ class AppLogoHorizontal extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.bug_report, size: 65, color: Colors.white),
+          const Icon(Icons.bug_report, size: 50, color: Colors.white),
           Text(
-            'FusionBot',
+            'MaslowAgents',
             style: GoogleFonts.playball(
               color: Colors.white,
-              // You need to set the color to white to apply the gradient
               fontSize: fontSize,
               fontWeight: fontWeight,
             ),

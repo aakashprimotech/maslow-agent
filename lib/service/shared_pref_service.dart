@@ -1,15 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/user.dart';
-
 
 class SessionManager {
   static const String _keyUid = 'uid';
   static const String _keyName = 'name';
   static const String _keyEmail = 'email';
+  static const String _keyAuthType = 'user';
   static const String _keyPrimaryWorkspace = 'primaryWorkspace';
-
   static const String _guestNotificationId= "guest_notification_id";
 
   static Future<void> saveUser(UserModel user) async {
@@ -17,6 +15,7 @@ class SessionManager {
     prefs.setString(_keyUid, user.uid);
     prefs.setString(_keyName, user.name);
     prefs.setString(_keyEmail, user.email);
+    prefs.setString(_keyAuthType, user.authType);
     prefs.setString(_keyPrimaryWorkspace, user.primaryWorkSpace ?? "");
   }
 
@@ -25,6 +24,7 @@ class SessionManager {
     final uid = prefs.getString(_keyUid);
     final name = prefs.getString(_keyName);
     final email = prefs.getString(_keyEmail);
+    final userType = prefs.getString(_keyAuthType);
     final primaryWorkspaceId = prefs.getString(_keyPrimaryWorkspace);
 
 
@@ -33,6 +33,7 @@ class SessionManager {
           uid: uid,
           name: name,
           email: email,
+          authType : userType ?? 'user',
           primaryWorkSpace: primaryWorkspaceId);
     }
     return null;
@@ -46,6 +47,7 @@ class SessionManager {
           uid: user.uid,
           name: user.name,
           email: user.email,
+          authType: user.authType,
           primaryWorkSpace: workSpaceReferance));
     }
   }
