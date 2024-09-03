@@ -80,6 +80,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           .collection('notifications')
           .limit(1);
 
+
       final querySnapshot = await notificationsQuery.get();
       if (querySnapshot.docs.isNotEmpty) {
         final notificationDoc = querySnapshot.docs.first;
