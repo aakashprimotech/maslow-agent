@@ -103,11 +103,13 @@ class _AdminUsersPageState extends State<AdminUsersPage> with SingleTickerProvid
       );
     }
 
-    // The existing code for 'individual' userType
     return Container(
       padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
       child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return ListView.builder(
@@ -147,7 +149,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> with SingleTickerProvid
             Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
             String userName = userData['displayName'] ?? 'No Name';
             String userEmail = userData['email'] ?? 'No Email';
-            String type = userData['type'] ?? 'individual'; // Assuming you have a 'type' field
+            String type = userData['type'] ?? 'individual';
 
             return type == userType &&
                 (userName.toLowerCase().contains(_searchText) ||
@@ -162,17 +164,36 @@ class _AdminUsersPageState extends State<AdminUsersPage> with SingleTickerProvid
               String userName = userData['displayName'] ?? 'No Name';
               String userEmail = userData['email'] ?? 'No Email';
               String userImage = userData['profileImage'] ?? 'assets/images/user_placeholder.jpg';
+              bool isBlocked = userData['isBlocked'] ?? false; // Check if user is blocked
 
               return ListTile(
-                contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                contentPadding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 16.0),
                 leading: CircleAvatar(
                   backgroundImage: AssetImage(userImage),
-                  radius: 20,
+                  radius: 18,
                 ),
-                title: Text(userName.capitalize() ?? "N/A"),
-                subtitle: Text(userEmail),
+                title: Text(userName.capitalize() ?? "N/A", style: const TextStyle(fontSize: 14)),
+                subtitle: Text(userEmail, style: const TextStyle(fontSize: 12)),
                 trailing: InkWell(
-                  onTap: () {},
+                  onTap: () async {
+                    try {
+                      // Toggle the block/unblock status
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(userDoc.id)
+                          .update({'isBlocked': !isBlocked});
+
+                      // Optionally show a success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(isBlocked ? 'User unblocked' : 'User blocked')),
+                      );
+                    } catch (e) {
+                      // Handle error
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error updating user status: $e')),
+                      );
+                    }
+                  },
                   child: Container(
                     height: 30,
                     alignment: Alignment.center,
@@ -184,7 +205,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> with SingleTickerProvid
                           color: Colors.grey.withOpacity(0.2),
                           spreadRadius: 3,
                           blurRadius: 7,
-                          offset: const Offset(0, 1), // changes position of shadow
+                          offset: const Offset(0, 1),
                         ),
                       ],
                       borderRadius: const BorderRadius.all(
@@ -192,9 +213,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> with SingleTickerProvid
                       ),
                     ),
                     padding: const EdgeInsets.all(5),
-                    child: const Text(
-                      'Block',
-                      style: TextStyle(fontSize: 13, color: Colors.white),
+                    child: Text(
+                      isBlocked ? 'Unblock' : 'Block',
+                      style: const TextStyle(fontSize: 13, color: Colors.white),
                     ),
                   ),
                 ),
@@ -205,108 +226,4 @@ class _AdminUsersPageState extends State<AdminUsersPage> with SingleTickerProvid
       ),
     );
   }
-
-
-/*  Widget _buildUsersView(String userType) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
-      child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return ListView.builder(
-              itemCount: 6, // Number of shimmer items
-              itemBuilder: (context, index) {
-                return Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                    leading: const CircleAvatar(
-                      backgroundColor: Colors.white,
-                      radius: 20,
-                    ),
-                    title: Container(
-                      width: double.infinity,
-                      height: 10.0,
-                      color: Colors.white,
-                    ),
-                    subtitle: Container(
-                      width: 150.0,
-                      height: 10.0,
-                      color: Colors.white,
-                    ),
-                  ),
-                );
-              },
-            );
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('Error fetching data'));
-          } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const NothingToShow();
-          }
-
-          // Filter users based on search text and type
-          var users = snapshot.data!.docs.where((userDoc) {
-            Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-            String userName = userData['displayName'] ?? 'No Name';
-            String userEmail = userData['email'] ?? 'No Email';
-            String type = userData['type'] ?? 'individual'; // Assuming you have a 'type' field
-
-            return type == userType &&
-                (userName.toLowerCase().contains(_searchText) ||
-                    userEmail.toLowerCase().contains(_searchText));
-          }).toList();
-
-          return ListView.builder(
-            itemCount: users.length,
-            itemBuilder: (context, index) {
-              DocumentSnapshot userDoc = users[index];
-              Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-              String userName = userData['displayName'] ?? 'No Name';
-              String userEmail = userData['email'] ?? 'No Email';
-              String userImage = userData['profileImage'] ?? 'assets/images/user_placeholder.jpg';
-
-              return ListTile(
-                contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                leading: CircleAvatar(
-                  backgroundImage: AssetImage(userImage),
-                  radius: 20,
-                ),
-                title: Text(userName.capitalize() ?? "N/A"),
-                subtitle: Text(userEmail),
-                trailing: InkWell(
-                  onTap: () {},
-                  child: Container(
-                    height: 30,
-                    alignment: Alignment.center,
-                    width: 70,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
-                          spreadRadius: 3,
-                          blurRadius: 7,
-                          offset: const Offset(0, 1), // changes position of shadow
-                        ),
-                      ],
-                      borderRadius: const BorderRadius.all(
-                        Radius.circular(10),
-                      ),
-                    ),
-                    padding: const EdgeInsets.all(5),
-                    child: const Text(
-                      'Block',
-                      style: TextStyle(fontSize: 13, color: Colors.white),
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }*/
 }

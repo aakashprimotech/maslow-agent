@@ -50,6 +50,7 @@ class _SignupScreenState extends State<SignupScreen> {
             .set({
           'displayName': _nameController.text,
           'email': _emailController.text,
+          'createdAt' :Timestamp.now(),
         });
 
         setState(() {
@@ -146,7 +147,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     'Sign Up',
                     style: TextStyle(
                       color: Colors.black87,
-                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Graphik',
                       fontSize: 20,
                     ),
                     textAlign: TextAlign.start,

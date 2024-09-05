@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lottie/lottie.dart';
 import 'package:socket_io_client/socket_io_client.dart' as Io;
 import 'package:http/http.dart' as http;
@@ -11,6 +12,7 @@ import '../../utils/colors.dart';
 import 'dart:convert';
 import 'agent_flow_model.dart';
 import 'agents_data_response.dart';
+
 
 class AgentFlowScreen extends StatefulWidget {
   AgentFlowModel agentFlowModel;
@@ -46,8 +48,43 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       }
     });
   }
-
   Future<void> _getCurrentUser() async {
+    currentUser = await SessionManager.getUser();
+    if (currentUser != null) {
+
+      bool isUserInMarketplace = widget.agentFlowModel.marketplaceUsers
+          ?.any((ref) => ref.id == UserService().getUserReference()?.id) ?? false;
+
+      setState(() async {
+        if (isUserInMarketplace) {
+          widget.agentFlowModel.dummyQuestion = null;
+          widget.agentFlowModel.dummyAnswer = null;
+        }
+
+        if (widget.agentFlowModel.dummyQuestion != null &&
+            widget.agentFlowModel.dummyAnswer != null &&
+            currentUser?.authType != 'admin') {
+          _userInformationsController.text = widget.agentFlowModel.dummyQuestion!;
+          // agentReasoningList = widget.agentFlowModel.dummyAnswer ?? [];
+            for (final item in widget.agentFlowModel.dummyAnswer!) {
+              await Future.delayed(const Duration(seconds: 1));
+              setState(() {
+                agentReasoningList.add(item);
+                _scrollToBottom();
+              });
+          }
+        } else {
+          _connectToSocket();
+        }
+
+        if (currentUser?.authType == 'admin') {
+          _connectToSocket();
+        }
+      });
+    }
+  }
+
+/*  Future<void> _getCurrentUser() async {
     currentUser = await SessionManager.getUser();
     if (currentUser != null) {
 
@@ -66,7 +103,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         }
       });
     }
-  }
+  }*/
 
   void _connectToSocket() {
     socket = Io.io(widget.agentFlowModel.socketUrl, <String, dynamic>{
@@ -133,7 +170,6 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
     socket.disconnect();
     _textFieldFocusNode.dispose();
     _userInformationsController.dispose();
-
     super.dispose();
   }
 
@@ -315,16 +351,19 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         backgroundColor: AppColors.backgroundColor,
         elevation: 0,
         titleSpacing: 0,
-        title: Row(
-          children: [
-            Image.asset('assets/images/maslow_icon.png', height: 22, width: 22),
-            const SizedBox(width: 10),
-            Text(
+
+        title: Image.asset('assets/images/maslow_logo.png', height: 22),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 30),
+            child: Text(
               widget.agentFlowModel.flowName,
-              style: const TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 14, color: Colors.black87,fontFamily: 'Graphik',
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
+
       ),
       body: Column(
         children: [
@@ -489,10 +528,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
             children: List.generate(reasoning.messages?.length ?? 0, (index) {
               return Padding(
                 padding: const EdgeInsets.only(top: 20),
-                child: Text(
-                  reasoning.messages![index],
-                  style: const TextStyle(color: Colors.black87, fontSize: 16),
-                ),
+                  child: MarkdownBody(data: reasoning.messages![index],)
               );
             }),
           )

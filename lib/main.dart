@@ -53,8 +53,11 @@ class MyApp extends StatelessWidget {
             title: 'MaslowAgents',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
-              useMaterial3: true,
-              primaryColor: AppColors.primaryColor,
+              // Optional: Set a default font for the entire app
+              fontFamily: 'Manrope',
+              textTheme: const TextTheme(
+                bodyMedium: TextStyle(fontFamily: 'Manrope'),
+              ),
             ),
             initialRoute: '/',
             onGenerateRoute: (settings) {

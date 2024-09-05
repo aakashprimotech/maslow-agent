@@ -48,135 +48,152 @@ class _UserHomePageState extends State<UserHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        backgroundColor: AppColors.messageBgColor.withAlpha(50),
-        title: Row(
-          children: [
-            Image.asset('assets/images/maslow_icon.png', height: 22, width: 22),
-            const SizedBox(width: 10),
-            currentUser?.name!=null ? Text(
-              "Hi, ${currentUser!.name}",
-              style: const TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
-            ) : const Text(
-              "N/A",
-              style: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          backgroundColor: AppColors.messageBgColor.withAlpha(50),
+          title: Image.asset('assets/images/maslow_logo.png', height: 22),
+          actions: [
+            Container(
+              alignment: Alignment.center,
+              margin: const EdgeInsets.only(right: 10),
+              height: 30,
+              width: 30,
+              decoration: const BoxDecoration(
+                color: AppColors.messageBgColor,
+                borderRadius: BorderRadius.all(
+                  Radius.circular(5),
+                ),
+              ),
+              child: InkWell(
+                onTap: _logout,
+                child: const Icon(
+                  Icons.logout,
+                  size: 20,
+                  color: AppColors.primaryColor,
+                ),
+              ),
+            ),
+            Container(
+              alignment: Alignment.center,
+              height: 30,
+              width: 30,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: const BoxDecoration(
+                color: AppColors.messageBgColor,
+                borderRadius: BorderRadius.all(
+                  Radius.circular(5),
+                ),
+              ),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationScreen(),
+                    ),
+                  );
+                },
+                child: const Icon(
+                  Icons.notifications_none_outlined,
+                  size: 20,
+                  color: AppColors.primaryColor,
+                ),
+              ),
+            ),
+
+            Container(
+                alignment: Alignment.center,
+                margin: const EdgeInsets.only(right: 32),
+                height: 30,
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      currentUser?.name!=null ? "${currentUser!.name.capitalize()}" :"N/A" ,
+                      style: const TextStyle(fontSize: 14, color: AppColors.primaryColor,fontWeight: FontWeight.w600
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    const CircleAvatar(
+                      backgroundImage: AssetImage('assets/images/user_placeholder.jpg'),
+                      radius: 13,
+                    ),
+                  ],
+                )
             )
           ],
         ),
-        actions: [
-          Container(
-            alignment: Alignment.center,
-            height: 30,
-            width: 30,
-            margin: const EdgeInsets.only(right: 10),
-            decoration: const BoxDecoration(
-              color: AppColors.messageBgColor,
-              borderRadius: BorderRadius.all(
-                Radius.circular(5),
-              ),
-            ),
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationScreen(),
-                  ),
-                );
-              },
-              child: const Icon(
-                Icons.notifications_none_outlined,
-                size: 20,
-                color: AppColors.primaryColor,
-              ),
-            ),
-          ),
-          Container(
-            alignment: Alignment.center,
-            margin: const EdgeInsets.only(right: 32),
-            height: 30,
-            width: 30,
-            decoration: const BoxDecoration(
-              color: AppColors.messageBgColor,
-              borderRadius: BorderRadius.all(
-                Radius.circular(5),
-              ),
-            ),
-            child: InkWell(
-              onTap: _logout,
-              child: const Icon(
-                Icons.logout,
-                size: 20,
-                color: AppColors.primaryColor,
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Container(color: AppColors.textFieldBorderColor, height: 1,),
-          Expanded(
-            child: Row(
-              children: [
-                Container(
-                  width: 250,
-                  padding: const EdgeInsets.only(top: 10),
-                  color: AppColors.messageBgColor.withAlpha(50),
-                  child: ListView.builder(
-                    itemCount: _pageTitles.length,
-                    itemBuilder: (context, index) {
-                      bool isSelected = _selectedIndex == index;
-                      return Container(
-                        margin: const EdgeInsets.fromLTRB(10,0,10,0) ,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.messageBgColor
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: SizedBox(
-                          height: 50,
-                          child: ListTile(
-                            title: Row(
-                              children: [
-                                Icon(
-                                  _pageIcons[index],
-                                  color: AppColors.primaryColor.withAlpha(150),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  _pageTitles[index].capitalize()!,
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            selected: isSelected,
-                            onTap: () => _onItemTapped(index),
+        body: Column(
+          children: [
+            Container(color: AppColors.textFieldBorderColor, height: 1,),
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 250,
+                    padding: const EdgeInsets.only(top: 10),
+                    color: AppColors.messageBgColor.withAlpha(50),
+                    child: ListView.builder(
+                      itemCount: _pageTitles.length,
+                      itemBuilder: (context, index) {
+                        bool isSelected = _selectedIndex == index;
+                        return Container(
+                          margin: const EdgeInsets.fromLTRB(10,0,10,0) ,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.messageBgColor
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12.0),
                           ),
-                        ),
-                      );
-                    },
+                          child: SizedBox(
+                            height: 50,
+                            child: ListTile(
+                              title: Row(
+                                children: [
+                                  Icon(
+                                    _pageIcons[index],
+                                    color: AppColors.primaryColor.withAlpha(150),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    _pageTitles[index].capitalize()!,
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              selected: isSelected,
+                              onTap: () => _onItemTapped(index),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Container(
-                    alignment: Alignment.topCenter,
-                    color: AppColors.backgroundColor,
-                    child: _getPage(_selectedIndex),
+                  Expanded(
+                    child: Container(
+                      alignment: Alignment.topCenter,
+                      color: AppColors.backgroundColor,
+                      child: _getPage(_selectedIndex),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

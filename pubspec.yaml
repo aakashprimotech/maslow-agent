@@ -27,7 +27,7 @@ dependencies:
   intl:
   http:
   flutter_colorpicker:
-  flutter_markdown: ^0.7.3
+  flutter_markdown:
   image_cropper: ^7.1.0
   uri:
   url_strategy: ^0.2.0
@@ -36,7 +36,6 @@ dependencies:
   lottie: ^2.0.0
   animated_text_kit:
   shimmer: ^2.0.0
-
 
 dev_dependencies:
   flutter_test:
@@ -50,3 +49,11 @@ flutter:
   assets:
     - assets/images/
     - assets/animations/
+
+  fonts:
+    - family: Graphik
+      fonts:
+        - asset: assets/fonts/Graphik-Bold_2.otf
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope regular.otf

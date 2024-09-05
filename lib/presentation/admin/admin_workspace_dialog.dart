@@ -24,11 +24,61 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
   final TextEditingController _apiUrlController = TextEditingController();
   final TextEditingController _tokenHeader = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  bool _showAuthSection = false;
-  bool _showInMarketplace =true;
   final TextEditingController _authHeaderKeyController = TextEditingController();
   UserModel? currentUser;
-  // bool _isAgentFlowPublic = false;
+
+  //private marketplace keys
+  bool _showAuthSection = false;
+  bool _showInMarketplace = true;
+  bool _isEmailFieldVisible = false;
+  bool _isQuerying = false;
+  List<String> _emailList = [];
+  final TextEditingController _emailController = TextEditingController();
+  bool _emailExists = false;
+
+
+  Future<void> _runQuery(String email) async {
+    _emailController.clear();
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      setState(() {
+        if (email.isNotEmpty && !_emailList.contains(email)) {
+          setState(() {
+            _emailList.add(email);
+          });
+        }
+      });
+    } else {
+      print("Email not found: $email");
+      context.showCustomSnackBar('Email not found in users collection');
+    }
+  }
+
+  Future<void> getEmailsFromReferences(List<DocumentReference> userRefs) async {
+    _emailList.clear();
+
+    for (DocumentReference userRef in userRefs) {
+      try {
+        DocumentSnapshot userDoc = await userRef.get();
+
+        if (userDoc.exists) {
+          String? email = userDoc['email'] as String?;
+          if (email != null) {
+            _emailList.add(email);
+          }
+        }
+      } catch (e) {
+        print('Error retrieving email from reference: $e');
+      }
+    }
+
+    setState(() {});
+  }
+
 
   final List<String> _categories = [
     'Education',
@@ -54,8 +104,31 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
       _descriptionController.text = widget.agentFlowModel?.description ?? "";
       _showInMarketplace = widget.agentFlowModel?.isPublished ?? false;
       _selectedCategory = widget.agentFlowModel?.category;
-      // _isAgentFlowPublic = widget.agentFlowModel?.isPublic ?? false;
+      getEmailsFromReferences(widget.agentFlowModel!.marketplaceUsers ?? []);
     }
+
+    _emailController.addListener(() {
+      _searchEmail(_emailController.text.trim());
+    });
+  }
+
+  void _searchEmail(String email) async {
+    if (email.isEmpty) {
+      setState(() {
+        _emailExists = false;
+      });
+      return;
+    }
+
+    final QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+
+    setState(() {
+      _emailExists = snapshot.docs.isNotEmpty;
+    });
   }
 
   var headerKeyValues = [
@@ -88,7 +161,22 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
   String? workspaceText;
   String? dialogHeaderText;
 
-  void addWorkspace() async {
+  Future<void> _addWorkspace(List<String> emailList) async {
+    // Ensure that emailList is not empty
+    if (emailList.isEmpty) {
+      context.showCustomSnackBar('No emails provided.');
+      return;
+    }
+
+    // Retrieve user references for the provided email list
+    final userReferences = await _getUserReferences(emailList);
+
+    if (userReferences.isEmpty) {
+      context.showCustomSnackBar('No users found for the provided emails.');
+      return;
+    }
+
+    // Your other workspace data
     String socketUrl = _socketsUrlController.text.trim();
     String apiUrl = _apiUrlController.text.trim();
     String headerToken = _tokenHeader.text.trim();
@@ -104,20 +192,22 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
 
     if (userRef != null) {
       AgentFlowModel agentFlowModel = AgentFlowModel(
-          createdBy: userRef,
-          apiURL: apiUrl,
-          socketUrl: socketUrl,
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now(),
-          flowName: flowName,
-          isPublished: _showInMarketplace,
-          // isPublic: _isAgentFlowPublic,
-          description: _descriptionController.text,
-          category: _selectedCategory ?? 'Uncategorized', // Default value if no category selected
-          authentication: Authentication(
-              key: authHeaderKey,
-              token: headerToken,
-              type: selectedTokenType ?? ""), );
+        createdBy: userRef,
+        apiURL: apiUrl,
+        socketUrl: socketUrl,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        flowName: flowName,
+        isPublished: _showInMarketplace,
+        description: _descriptionController.text,
+        category: _selectedCategory ?? 'Uncategorized',
+        authentication: Authentication(
+          key: authHeaderKey,
+          token: headerToken,
+          type: selectedTokenType ?? "",
+        ),
+        marketplaceUsers: userReferences,
+      );
 
       await FirebaseFirestore.instance
           .collection('marketplace')
@@ -127,6 +217,24 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
     }
 
     Navigator.pop(context);
+  }
+
+  Future<List<DocumentReference>> _getUserReferences(List<String> emails) async {
+    final userReferences = <DocumentReference>[];
+
+    for (String email in emails) {
+      final userQuerySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (userQuerySnapshot.docs.isNotEmpty) {
+        userReferences.add(userQuerySnapshot.docs.first.reference);
+      }
+    }
+
+    return userReferences;
   }
 
   void updateWorkspace() async {
@@ -143,6 +251,9 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
     }
 
     final userRef = UserService().getUserReference();
+    // Retrieve user references for the provided email list
+    final userReferences = await _getUserReferences(_emailList);
+
 
     if(userRef != null) {
       AgentFlowModel agentFlowModel = AgentFlowModel(
@@ -153,14 +264,15 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
         flowName: flowName,
         createdAt: Timestamp.now(),
         isPublished: _showInMarketplace,
-        // isPublic: _isAgentFlowPublic,
         description: _descriptionController.text,
         category: _selectedCategory ?? 'Uncategorized',
+        marketplaceUsers: userReferences,
         authentication: Authentication(
           key: authHeaderKey,
           token: headerToken,
           type: selectedTokenType ?? "",
         ),
+
       );
 
       await FirebaseFirestore.instance
@@ -179,7 +291,15 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),
       ),
-      title: Text(widget.agentFlowModel!=null ? 'Update Agent Flow' : 'Create Agent Flow'),
+      title: Text(
+        widget.agentFlowModel != null
+            ? 'Update Agent Flow'
+            : 'Create Agent Flow',
+        style: const TextStyle(
+          fontFamily: 'Graphik',
+          fontSize: 18
+        ),
+      ),
       contentPadding: const EdgeInsets.all(20.0),
       content: SingleChildScrollView(
         child: SizedBox(
@@ -312,38 +432,6 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                 ],
               ),
               const SizedBox(height: 10,),
-/*
-              Row(
-                children: [
-                  const Text(
-                    'Workspace Type: ',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  Radio<bool>(
-                    value: true,
-                    groupValue: _isAgentFlowPublic,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _isAgentFlowPublic = value ?? false;
-                      });
-                    },
-                  ),
-                  const Text('Public'),
-                  const SizedBox(width: 20),
-                  Radio<bool>(
-                    value: false,
-                    groupValue: _isAgentFlowPublic,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _isAgentFlowPublic = value ?? true;
-                      });
-                    },
-                  ),
-                  const Text('Private'),
-                ],
-              ),
-*/
-              const SizedBox(height: 5,),
               Row(
                 children: [
                   Checkbox(
@@ -351,13 +439,72 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                     onChanged: (bool? value) {
                       setState(() {
                         _showInMarketplace = value ?? false;
+                        _isEmailFieldVisible = !_showInMarketplace;
                       });
                     },
                   ),
                   const Text('Show in marketplace'),
                 ],
               ),
-              const SizedBox(height: 5,),
+                Container(
+                  margin: const EdgeInsets.only(top: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Enter the emails of the people you want to give access to this marketplace.",
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 10,),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter email here..',
+                          border: const OutlineInputBorder(),
+                          labelStyle: const TextStyle(
+                            fontSize: 12.0,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.add),
+                            color: _emailExists ? Colors.green : Colors.grey,
+                            onPressed: _emailExists ? () {
+                              setState(() {
+                                _isQuerying = true;
+                              });
+                              _runQuery(_emailController.text).then((_) {
+                                setState(() {
+                                  _isQuerying = false;
+                                });
+                              });
+                            } : null,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              // List of emails
+              if (_emailList.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _emailList.map((email) => Align(
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      children: [
+                        Text(email),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: AppColors.primaryColor,size: 15,),
+                          onPressed: () {
+                            setState(() {
+                              _emailList.remove(email);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  )).toList(),
+                ),
+              const SizedBox(height: 10,),
               Row(
                 children: [
                   Checkbox(
@@ -377,7 +524,6 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                         const SizedBox(height: 20),
                         Container(
                           decoration: BoxDecoration(
-                              // color: Colors.grey.withAlpha(50),
                               color: AppColors.messageBgColor,
                               borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(
@@ -500,6 +646,40 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
           ),
         ),
         InkWell(
+          onTap: () {
+            if (widget.flowDocumentId == null || widget.flowDocumentId!.isEmpty) {
+              _addWorkspace(_emailList);
+            } else {
+              updateWorkspace();
+            }
+          },
+          child: Container(
+            height: 30,
+            alignment: Alignment.center,
+            width: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primaryColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 3,
+                  blurRadius: 7,
+                  offset: const Offset(0, 1), // changes position of shadow
+                ),
+              ],
+              borderRadius: const BorderRadius.all(
+                Radius.circular(10),
+              ),
+            ),
+            padding: const EdgeInsets.all(5),
+            child: Text(
+              _btnText!,
+              style: const TextStyle(fontSize: 15, color: Colors.white),
+            ),
+          ),
+        ),
+
+        /*  InkWell(
           onTap: (widget.flowDocumentId == null ||
                   widget.flowDocumentId!.isEmpty == true)
               ? addWorkspace
@@ -528,7 +708,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
               style: const TextStyle(fontSize: 15, color: Colors.white),
             ),
           ),
-        ),
+        ),*/
       ],
     );
   }

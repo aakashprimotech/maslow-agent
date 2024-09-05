@@ -66,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _signInWithEmailAndPassword() async {
+/*  void _signInWithEmailAndPassword() async {
     try {
       if (_formKey.currentState!.validate()) {
         final String email = _emailController.text.trim();
@@ -104,7 +104,63 @@ class _LoginScreenState extends State<LoginScreen> {
       });
       context.showCustomSnackBar(_errorMessage);
     }
+  }*/
+
+  void _signInWithEmailAndPassword() async {
+    try {
+      if (_formKey.currentState!.validate()) {
+        final String email = _emailController.text.trim();
+        final String password = _passwordController.text;
+
+        // Sign in the user
+        UserCredential userCredential =
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+
+        // Fetch user data from Firestore
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        // Check if the user is blocked
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        bool isBlocked = userData['isBlocked'] ?? false;
+
+        if (isBlocked) {
+          await FirebaseAuth.instance.signOut();
+          setState(() {
+            _errorMessage = 'Your account is blocked. Please contact support.';
+          });
+          context.showCustomSnackBar(_errorMessage);
+          return;
+        }
+
+        // Save user data if not blocked
+        await SessionManager.saveUser(UserModel(
+          uid: userCredential.user?.uid ?? '',
+          name: userData['displayName'] ?? '',
+          email: userCredential.user?.email ?? '',
+          authType: 'user',
+          primaryWorkSpace: (userData['primaryWorkSpace'] as DocumentReference?)?.id,
+        ));
+
+        // Navigate to the user home page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const UserHomePage()),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to sign in with Email and Password: $e';
+      });
+      context.showCustomSnackBar(_errorMessage);
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Login',
                     style: TextStyle(
                       color: Colors.black87,
-                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Graphik',
                       fontSize: 20,
                     ),
                     textAlign: TextAlign.start,

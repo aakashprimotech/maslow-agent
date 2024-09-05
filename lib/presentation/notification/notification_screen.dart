@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -32,29 +31,26 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Stream<List<NotificationModel>> _notificationStream() {
-    final currentUser = FirebaseAuth.instance.currentUser;
-
-    if (currentUser == null) {
-      return Stream.value([]);
-    }
-
     return FirebaseFirestore.instance
         .collection('notifications')
         .snapshots()
-        .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => NotificationModel.fromMap(doc))
-          .toList();
+        .map((querySnapshot) {
+      return querySnapshot.docs
+          .map((doc) {
+        return NotificationModel.fromFirestore(doc);
+      }).toList();
     });
   }
 
-  Future<Map<String, dynamic>?> _fetchMarketplaceData(DocumentReference workspaceRef) async {
-    final workspaceSnapshot = await workspaceRef.get();
-    if (workspaceSnapshot.exists) {
-      return workspaceSnapshot.data() as Map<String, dynamic>?;
-    }
-    return null;
+  Stream<Map<String, dynamic>?> _marketplaceDataStream(DocumentReference workspaceRef) {
+    return workspaceRef.snapshots().map((snapshot) {
+      if (snapshot.exists) {
+        return snapshot.data() as Map<String, dynamic>?;
+      }
+      return null;
+    });
   }
+
 
   Future<void> _updateMarketplaceUsers(DocumentReference agentFlowRef, DocumentReference userRef) async {
     final workspaceSnapshot = await agentFlowRef.get();
@@ -79,7 +75,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
       final notificationsQuery = FirebaseFirestore.instance
           .collection('notifications')
           .limit(1);
-
 
       final querySnapshot = await notificationsQuery.get();
       if (querySnapshot.docs.isNotEmpty) {
@@ -115,7 +110,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               style: TextStyle(
                   fontSize: 16,
                   color: Colors.black,
-                  fontWeight: FontWeight.bold),
+                fontFamily: 'Graphik',),
             ),
           ],
         ),
@@ -124,7 +119,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         children: [
           Container(color: AppColors.textFieldBorderColor, height: 1,),
           const SizedBox(height: 20,),
-          if (currentUser?.authType == 'admin') Expanded(
+          if (currentUser?.authType == 'admin')  Expanded(
             child: StreamBuilder<List<NotificationModel>>(
               stream: _notificationStream(),
               builder: (context, notificationSnapshot) {
@@ -138,8 +133,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   final notifications = notificationSnapshot.data!;
                   return ListView(
                     children: notifications.map((notification) {
-                      return FutureBuilder<Map<String, dynamic>?>(
-                        future: _fetchMarketplaceData(notification.agentFlowRef),
+                      return StreamBuilder<Map<String, dynamic>?>(
+                        stream: _marketplaceDataStream(notification.agentFlowRef),
                         builder: (context, marketplaceSnapshot) {
                           if (marketplaceSnapshot.connectionState == ConnectionState.waiting) {
                             return Container(
@@ -190,45 +185,43 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               child: InkWell(
                                 onTap: () {
                                   if (notification.status == false) {
-                                    _updateMarketplaceUserDialog(notification,marketplaceSnapshotData['flowName']);
+                                    _updateMarketplaceUserDialog(notification, marketplaceSnapshotData['flowName']);
                                   }
-                                  },
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
                                   child: ListTile(
-                                    title: Expanded(
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          RichText(
-                                            text: TextSpan(
-                                              children: [
-                                                TextSpan(
-                                                  text: notification.email,
-                                                  style: const TextStyle(fontSize: 14, color: Colors.black87),
-                                                ),
-                                                const TextSpan(
-                                                  text: " is requesting access to the marketplace ",
-                                                  style: TextStyle(fontSize: 14, color: Colors.black87),
-                                                ),
-                                                TextSpan(
-                                                  text: marketplaceSnapshotData['flowName'],
-                                                  style: const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.bold),
-                                                ),
-                                                const TextSpan(
-                                                  text: " Would you like to approve and grant permission?",
-                                                  style: TextStyle(fontSize: 14, color: Colors.black87),
-                                                ),
-                                              ],
-                                            ),
+                                    title: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        RichText(
+                                          text: TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: notification.email,
+                                                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                              ),
+                                              const TextSpan(
+                                                text: " is requesting access to the marketplace ",
+                                                style: TextStyle(fontSize: 14, color: Colors.black87),
+                                              ),
+                                              TextSpan(
+                                                text: marketplaceSnapshotData['flowName'],
+                                                style: const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.bold),
+                                              ),
+                                              const TextSpan(
+                                                text: " Would you like to approve and grant permission?",
+                                                style: TextStyle(fontSize: 14, color: Colors.black87),
+                                              ),
+                                            ],
                                           ),
-                                          Icon(
-                                            Icons.circle,
-                                            size: 12,
-                                            color: !notification.status ? Colors.green : Colors.yellow,
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                        Icon(
+                                          Icons.circle,
+                                          size: 12,
+                                          color: !notification.status ? Colors.green : Colors.yellow,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -278,8 +271,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
           content: RichText(
             text: TextSpan(
               style: const TextStyle(
-                fontSize: 16, // Adjust the font size as per your need
-                color: Colors.black87, // Set the default color
+                fontSize: 16,
+                color: Colors.black87,
               ),
               children: [
                 const TextSpan(
@@ -350,5 +343,4 @@ class _NotificationScreenState extends State<NotificationScreen> {
       },
     );
   }
-
 }
