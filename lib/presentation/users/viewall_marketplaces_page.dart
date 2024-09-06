@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
 import 'package:shimmer/shimmer.dart';
-
 import '../../utils/colors.dart';
 import '../agent_flows/agent_flow_model.dart';
 import '../agent_flows/agent_flow_screen.dart';
@@ -18,6 +18,7 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
   final TextEditingController _searchController = TextEditingController();
   String? _selectedCategory;
   String _searchText = "";
+  Timer? _debounce;
 
   final List<String> _categories = [
     'Education',
@@ -26,6 +27,23 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
     'Sports',
     'Uncategorized'
   ];
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchText = value.toLowerCase();
+      });
+    });
+  }
+
   void _showCategoryFilter() {
     showDialog(
       context: context,
@@ -37,12 +55,12 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
               children: _categories.map((category) {
                 return ListTile(
                   title: Text(category),
-                  tileColor: _selectedCategory == category ? Colors.grey[200] : null, // Highlight selected category
+                  tileColor: _selectedCategory == category ? Colors.grey[200] : null,
                   onTap: () {
                     setState(() {
                       _selectedCategory = category;
                     });
-                    Navigator.of(context).pop(); // Close the dialog
+                    Navigator.of(context).pop();
                   },
                 );
               }).toList(),
@@ -52,15 +70,15 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  _selectedCategory = null; // Clear the selected category
+                  _selectedCategory = null;
                 });
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
               child: const Text('Clear Filter'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
               child: const Text('Cancel'),
             ),
@@ -107,7 +125,8 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.black,
-                fontFamily: 'Graphik',),
+                fontFamily: 'Graphik',
+              ),
             ),
           ],
         ),
@@ -116,8 +135,7 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
         child: Container(
           child: Column(
             children: [
-              Container(color: AppColors.textFieldBorderColor, height: 1,),
-
+              Container(color: AppColors.textFieldBorderColor, height: 1),
               const SizedBox(height: 50.0),
               const Text(
                 'Marketplace',
@@ -149,17 +167,13 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
                           ],
                         ],
                       ),
-                      onPressed: _showCategoryFilter, // Show category filter on button press
+                      onPressed: _showCategoryFilter,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchText = value.toLowerCase();
-                    });
-                  },
+                  onChanged: _onSearchChanged,
                 ),
               ),
               const SizedBox(height: 20.0),
@@ -170,7 +184,7 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('marketplace')
-                        .where('isPublished',isEqualTo: true)
+                        .where('isPublished', isEqualTo: true)
                         .orderBy('createdAt', descending: true)
                         .snapshots(),
                     builder: (context, snapshot) {
@@ -241,7 +255,8 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
                             crossAxisCount: 3,
                             crossAxisSpacing: 10.0,
                             mainAxisSpacing: 10.0,
-                            childAspectRatio: (MediaQuery.of(context).size.width / 3) / (MediaQuery.of(context).size.height /3.2),
+                            childAspectRatio: (MediaQuery.of(context).size.width / 3) /
+                                (MediaQuery.of(context).size.height / 3.2),
                           ),
                           itemCount: filteredAgentFlows.length,
                           itemBuilder: (context, index) {
@@ -292,7 +307,6 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
                                       ),
                                     ],
                                   ),
-
                                   Column(
                                     children: [
                                       Row(
@@ -331,7 +345,8 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
                                               padding: const EdgeInsets.all(5),
                                               child: const Text(
                                                 'Chat',
-                                                style: TextStyle(fontSize: 14, color: Colors.white),
+                                                style: TextStyle(
+                                                    fontSize: 14, color: Colors.white),
                                               ),
                                             ),
                                           ),

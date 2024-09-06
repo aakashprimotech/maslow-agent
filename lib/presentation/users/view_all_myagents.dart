@@ -415,7 +415,7 @@ class _ViewAllMyagentsState extends State<ViewAllMyagents> {
 
   void _onSearchChanged(String value) {
     if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(seconds: 1), () {
+    _debounce = Timer(const Duration(milliseconds: 500), () {
       setState(() {
         _searchText = value.toLowerCase();
       });
