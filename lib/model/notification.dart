@@ -51,6 +51,7 @@ class NotificationModel {
   final DocumentReference agentFlowRef;
   final Timestamp createdAt;
   final bool status;
+  final bool isAccepted;
 
   NotificationModel({
     required this.userRef,
@@ -59,9 +60,9 @@ class NotificationModel {
     required this.agentFlowRef,
     required this.createdAt,
     required this.status,
+    required this.isAccepted,
   });
 
-  // Converts the NotificationModel instance to a Map
   Map<String, dynamic> toMap() {
     return {
       'userRef': userRef,
@@ -70,10 +71,10 @@ class NotificationModel {
       'agentFlowRef': agentFlowRef,
       'createdAt': createdAt,
       'status': status,
+      'isAccepted': isAccepted,
     };
   }
 
-  // Converts a Firestore DocumentSnapshot into a NotificationModel instance
   factory NotificationModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 
@@ -84,10 +85,10 @@ class NotificationModel {
       agentFlowRef: data['agentFlowRef'] as DocumentReference,
       createdAt: data['createdAt'] as Timestamp,
       status: data['status'] as bool,
+      isAccepted: data['isAccepted'] as bool,
     );
   }
 
-  // Converts the NotificationModel instance to a Map that can be used to update Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'userRef': userRef,
@@ -96,6 +97,7 @@ class NotificationModel {
       'agentFlowRef': agentFlowRef,
       'createdAt': createdAt,
       'status': status,
+      'isAccepted' : isAccepted,
     };
   }
 }

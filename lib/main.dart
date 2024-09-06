@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:maslow_agents/presentation/admin/admin_home.dart';
 import 'package:maslow_agents/presentation/admin/admin_login.dart';
 import 'package:maslow_agents/presentation/auth/login.dart';
@@ -31,6 +32,8 @@ Future main() async {
   final currentUrl = Uri.base;
   final redirect = currentUrl.queryParameters['redirect'];
 
+  await ScreenUtil.ensureScreenSize();
+
   if (redirect != null && redirect.isNotEmpty) {
     runApp(MyApp(initialRoute: redirect));
   } else {
@@ -45,46 +48,53 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-        future: _checkLoginStatus(),
-        builder: (context, snapshot) {
-          bool isLoggedIn = snapshot.data ?? false;
-          return MaterialApp(
-            title: 'MaslowAgents',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              // Optional: Set a default font for the entire app
-              fontFamily: 'Manrope',
-              textTheme: const TextTheme(
-                bodyMedium: TextStyle(fontFamily: 'Manrope'),
-              ),
-            ),
-            initialRoute: '/',
-            onGenerateRoute: (settings) {
-              if (settings.name != null) {
-                final Uri uri = Uri.parse(settings.name!);
-                if(uri.pathSegments.length == 1 && uri.pathSegments.first == 'adminLogin'){
-                  MaterialPageRoute(
-                    builder: (context) => const AdminLoginScreen(),
-                  );
-                }
+    return ScreenUtilInit(
+      designSize: Size(1440, 1024), // Example web design size
+      minTextAdapt: true,
+      splitScreenMode: true,
+        builder: (context,child) {
+          return FutureBuilder<bool>(
+              future: _checkLoginStatus(),
+              builder: (context, snapshot) {
+                bool isLoggedIn = snapshot.data ?? false;
+                return MaterialApp(
+                  title: 'MaslowAgents',
+                  debugShowCheckedModeBanner: false,
+                  theme: ThemeData(
+                    // Optional: Set a default font for the entire app
+                    fontFamily: 'Manrope',
+                    textTheme: const TextTheme(
+                      bodyMedium: TextStyle(fontFamily: 'Manrope'),
+                    ),
+                  ),
+                  initialRoute: '/',
+                  onGenerateRoute: (settings) {
+                    if (settings.name != null) {
+                      final Uri uri = Uri.parse(settings.name!);
+                      if(uri.pathSegments.length == 1 && uri.pathSegments.first == 'adminLogin'){
+                        MaterialPageRoute(
+                          builder: (context) => const AdminLoginScreen(),
+                        );
+                      }
+                    }
+                    return MaterialPageRoute(
+                      builder: (context) => HomeScreen(isLoggedIn: isLoggedIn),
+                    );
+                  },
+                  routes: {
+                    '/login': (context) => const LoginScreen(),
+                    '/adminHome': (context) => const AdminHomePage(),
+                    '/adminLogin' : (context) => const AdminLoginScreen(),
+                  },
+                  /*initialRoute: '/',
+                routes: {
+                  '/' : (context) => const AdminLoginScreen(),
+                },*/
+                );
               }
-              return MaterialPageRoute(
-                builder: (context) => HomeScreen(isLoggedIn: isLoggedIn),
-              );
-            },
-            routes: {
-              '/login': (context) => const LoginScreen(),
-              '/adminHome': (context) => const AdminHomePage(),
-              '/adminLogin' : (context) => const AdminLoginScreen(),
-            },
-            /*initialRoute: '/',
-            routes: {
-              '/' : (context) => const AdminLoginScreen(),
-            },*/
           );
-        }
-    );
+        },
+      );
   }
 
   Future<bool> _checkLoginStatus() async {

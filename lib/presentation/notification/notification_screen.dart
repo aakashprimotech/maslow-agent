@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:maslow_agents/service/user_service.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../model/notification.dart';
@@ -33,6 +34,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Stream<List<NotificationModel>> _notificationStream() {
     return FirebaseFirestore.instance
         .collection('notifications')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((querySnapshot) {
+      return querySnapshot.docs
+          .map((doc) {
+        return NotificationModel.fromFirestore(doc);
+      }).toList();
+    });
+  } 
+  
+  Stream<List<NotificationModel>> _usersNotificationsStream() {
+    return FirebaseFirestore.instance
+        .collection('notifications')
+        .where('isAccepted',isEqualTo: true)
+        .where('userRef',isEqualTo: UserService().getUserReference())
         .snapshots()
         .map((querySnapshot) {
       return querySnapshot.docs
@@ -50,7 +66,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
       return null;
     });
   }
-
 
   Future<void> _updateMarketplaceUsers(DocumentReference agentFlowRef, DocumentReference userRef) async {
     final workspaceSnapshot = await agentFlowRef.get();
@@ -79,7 +94,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       final querySnapshot = await notificationsQuery.get();
       if (querySnapshot.docs.isNotEmpty) {
         final notificationDoc = querySnapshot.docs.first;
-        await notificationDoc.reference.update({'status': true});
+        await notificationDoc.reference.update({'status': true,'isAccepted' : true});
       }
 
     } else {
@@ -173,7 +188,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           } else if (marketplaceSnapshot.hasError) {
                             return Center(child: Text('Error: ${marketplaceSnapshot.error}'));
                           } else if (!marketplaceSnapshot.hasData) {
-                            return const Center(child: Text('Workspace data not found'));
+                            return const Center(child: Text('Marketplace data not found'));
                           } else {
                             final marketplaceSnapshotData = marketplaceSnapshot.data!;
                             return Container(
@@ -235,16 +250,110 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 }
               },
             ),
-          ) else const Expanded(
-            child: Center(
-              child: Text(
-                'Feature coming soon!',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.black54,
-                ),
-              ),
+          ) else Expanded(
+            child: StreamBuilder<List<NotificationModel>>(
+              stream: _usersNotificationsStream(),
+              builder: (context, notificationSnapshot) {
+                if (notificationSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (notificationSnapshot.hasError) {
+                  return Center(child: Text('Error: ${notificationSnapshot.error}'));
+                } else if (!notificationSnapshot.hasData || notificationSnapshot.data!.isEmpty) {
+                  return const Center(child: Text('No notifications'));
+                } else {
+                  final notifications = notificationSnapshot.data!;
+                  return ListView(
+                    children: notifications.map((notification) {
+                      return StreamBuilder<Map<String, dynamic>?>(
+                        stream: _marketplaceDataStream(notification.agentFlowRef),
+                        builder: (context, marketplaceSnapshot) {
+                          if (marketplaceSnapshot.connectionState == ConnectionState.waiting) {
+                            return Container(
+                              height: 70,
+                              alignment: Alignment.center,
+                              margin: const EdgeInsets.fromLTRB(50, 8, 50, 8),
+                              decoration: BoxDecoration(
+                                color: AppColors.messageBgColor,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Shimmer.fromColors(
+                                baseColor: Colors.grey[300]!,
+                                highlightColor: Colors.grey[100]!,
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        height: 10,
+                                        width: double.infinity,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        height: 10,
+                                        width: 100,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          } else if (marketplaceSnapshot.hasError) {
+                            return Center(child: Text('Error: ${marketplaceSnapshot.error}'));
+                          } else if (!marketplaceSnapshot.hasData) {
+                            return const Center(child: Text('Marketplace data not found'));
+                          } else {
+                            final marketplaceSnapshotData = marketplaceSnapshot.data!;
+                            return Container(
+                              margin: const EdgeInsets.fromLTRB(50, 8, 50, 8),
+                              decoration: const BoxDecoration(
+                                color: AppColors.messageBgColor,
+                                borderRadius: BorderRadius.all(Radius.circular(8)),
+                              ),
+                              child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    child: ListTile(
+                                      title: RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            const TextSpan(
+                                              text: 'Your ',
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black87),
+                                            ),
+                                            TextSpan(
+                                              text: marketplaceSnapshotData[
+                                                  'flowName'],
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.black87,
+                                                fontFamily: 'Graphik',
+                                              ),
+                                            ),
+                                            const TextSpan(
+                                              text:
+                                                  " marketplace request has been accepted by the admin. You can now access all the features.",
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black87),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                          }
+                        },
+                      );
+                    }).toList(),
+                  );
+                }
+              },
             ),
           )
         ],

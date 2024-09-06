@@ -265,7 +265,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
           ),
-          title: const Text("Confirm Logout"),
+          title: const Text("Confirm Logout",style: TextStyle(fontSize: 20,fontFamily: 'Graphik',),),
           content: const Text("Are you sure you want to logout?"),
           actions: <Widget>[
             TextButton(
@@ -281,8 +281,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 });
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
-                      (Route<dynamic> route) => false, // This will remove all previous routes
+                  MaterialPageRoute(
+                    builder: (context) => const AdminLoginScreen(),
+                  ),
+                  (Route<dynamic> route) => false,
                 );
               },
               child: Container(

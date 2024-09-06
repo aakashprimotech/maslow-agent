@@ -321,6 +321,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         email: currentUser?.email,
         agentFlowRef: widget.marketplaceReference!,
         createdAt: Timestamp.now(), status: false,
+        isAccepted : false,
       );
 
       FirebaseFirestore.instance

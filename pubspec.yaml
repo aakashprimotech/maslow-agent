@@ -36,6 +36,7 @@ dependencies:
   lottie: ^2.0.0
   animated_text_kit:
   shimmer: ^2.0.0
+  flutter_screenutil:
 
 dev_dependencies:
   flutter_test:

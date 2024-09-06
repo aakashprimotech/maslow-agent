@@ -1,11 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:maslow_agents/presentation/auth/login.dart';
 import 'package:maslow_agents/presentation/users/user_agents_page.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../model/user.dart';
 import '../../service/shared_pref_service.dart';
+import '../../service/user_service.dart';
 import '../../utils/colors.dart';
+import '../agent_flows/agent_flow_model.dart';
 import '../notification/notification_screen.dart';
 
 class UserHomePage extends StatefulWidget {
@@ -45,6 +49,16 @@ class _UserHomePageState extends State<UserHomePage> {
       _selectedIndex = index;
     });
   }
+
+  final List<String> strings = [
+    'First item',
+    'Second item',
+    'Third item',
+    'Fourth item',
+    'Fifth item',
+    // Add more items here
+  ];
+
 
   @override
   Widget build(BuildContext context) {
@@ -142,44 +156,211 @@ class _UserHomePageState extends State<UserHomePage> {
                     width: 250,
                     padding: const EdgeInsets.only(top: 10),
                     color: AppColors.messageBgColor.withAlpha(50),
-                    child: ListView.builder(
-                      itemCount: _pageTitles.length,
-                      itemBuilder: (context, index) {
-                        bool isSelected = _selectedIndex == index;
-                        return Container(
-                          margin: const EdgeInsets.fromLTRB(10,0,10,0) ,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.messageBgColor
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: SizedBox(
-                            height: 50,
-                            child: ListTile(
-                              title: Row(
-                                children: [
-                                  Icon(
-                                    _pageIcons[index],
-                                    color: AppColors.primaryColor.withAlpha(150),
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    _pageTitles[index].capitalize()!,
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
+                    child: Column(
+                      children: [
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _pageTitles.length,
+                          itemBuilder: (context, index) {
+                            bool isSelected = _selectedIndex == index;
+                            return Container(
+                              margin: const EdgeInsets.fromLTRB(10,0,10,0) ,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.messageBgColor
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12.0),
                               ),
-                              selected: isSelected,
-                              onTap: () => _onItemTapped(index),
-                            ),
+                              child: SizedBox(
+                                height: 50,
+                                child: ListTile(
+                                  title: Row(
+                                    children: [
+                                      Icon(
+                                        _pageIcons[index],
+                                        color: AppColors.primaryColor.withAlpha(150),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        _pageTitles[index].capitalize()!,
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  selected: isSelected,
+                                  onTap: () => _onItemTapped(index),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        ExpansionTile(
+                          backgroundColor: Colors.transparent,
+                          collapsedBackgroundColor: Colors.transparent,
+                          // Remove borders/lines by setting collapsedShape and shape to a Border with no borders
+                          collapsedShape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(0.0),
+                            side: BorderSide.none,
                           ),
-                        );
-                      },
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(0.0),
+                            side: BorderSide.none,
+                          ),
+                          title: const Text(
+                            'Marketplace',
+                            style: TextStyle(fontSize: 14, color: Colors.black87),
+                          ),
+                          children: <Widget>[
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 200),
+                              child: StreamBuilder<QuerySnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('marketplace')
+                                    .where('isPublished', isEqualTo: true)
+                                    .orderBy('createdAt', descending: true)
+                                    .snapshots(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return _buildShimmer();
+                                  } else if (snapshot.hasError) {
+                                    return Center(child: Text('Error: ${snapshot.error}'));
+                                  } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                                    return Center(child: Text('No items found.'));
+                                  }
+
+                                  // Convert Firestore documents to your model
+                                  var filteredDocs = snapshot.data!.docs;
+                                  var agentFlows = filteredDocs.map((doc) {
+                                    return AgentFlowModel.fromFirestore(doc);
+                                  }).toList();
+
+                                  return ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: agentFlows.length,
+                                    itemBuilder: (context, index) {
+                                      return ListTile(
+                                        title: Row(
+                                          children: [
+                                            Container(
+                                              height: 8,
+                                              width: 8,
+                                              decoration: BoxDecoration(
+                                                color: Colors.green,
+                                                borderRadius: BorderRadius.circular(150),
+                                              ),
+                                            ),
+                                            SizedBox(width: 10),
+                                            Text(
+                                              agentFlows[index].flowName,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.black87,
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        ExpansionTile(
+                          backgroundColor: Colors.transparent,
+                          collapsedBackgroundColor: Colors.transparent,
+                          // Remove borders/lines by setting collapsedShape and shape to a Border with no borders
+                          collapsedShape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(0.0),
+                            side: BorderSide.none,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(0.0),
+                            side: BorderSide.none,
+                          ),
+                          title: const Text(
+                            'My Agents',
+                            style: TextStyle(fontSize: 14, color: Colors.black87,),
+                          ),
+                          children: <Widget>[
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 200),
+                              child: StreamBuilder<QuerySnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('marketplace')
+                                    .orderBy('createdAt', descending: true)
+                                    .snapshots(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return _buildShimmer();
+                                  } else if (snapshot.hasError) {
+                                    return Center(child: Text('Error: ${snapshot.error}'));
+                                  } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                                    return Center(child: Text('No items found.'));
+                                  }
+
+                                  var filteredDocs = snapshot.data!.docs.where((doc) {
+                                    final data = doc.data() as Map<String, dynamic>;
+                                    if (data.containsKey('marketplaceUsers')) {
+                                      List<dynamic> marketplaceUsers = data['marketplaceUsers'];
+                                      return marketplaceUsers
+                                          .contains(UserService().getUserReference());
+                                    }
+
+                                    return false;
+                                  }).toList();
+
+                                  if (filteredDocs.isEmpty) {
+                                    return const Center(child: Text('No agents found'));
+                                  }
+
+                                  // Create AgentFlowModel list based on filteredDocs
+                                  var agentFlows = filteredDocs.map((doc) {
+                                    return AgentFlowModel.fromFirestore(doc);
+                                  }).toList();
+
+                                  return ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: agentFlows.length,
+                                    itemBuilder: (context, index) {
+                                      return ListTile(
+                                        title: Row(
+                                          children: [
+                                            Container(
+                                              height: 8,
+                                              width: 8,
+                                              decoration: BoxDecoration(
+                                                color: Colors.green,
+                                                borderRadius: BorderRadius.circular(150),
+                                              ),
+                                            ),
+                                            SizedBox(width: 10),
+                                            Text(
+                                              agentFlows[index].flowName,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.black87,
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   Expanded(
@@ -195,6 +376,26 @@ class _UserHomePageState extends State<UserHomePage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: ListTile(
+            title: Container(
+              height: 20,
+              color: Colors.white,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -215,7 +416,7 @@ class _UserHomePageState extends State<UserHomePage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
           ),
-          title: const Text("Confirm Logout"),
+          title: const Text("Confirm Logout",style: TextStyle(fontSize: 20,fontFamily: 'Graphik',),),
           content: const Text("Are you sure you want to logout?"),
           actions: <Widget>[
             TextButton(

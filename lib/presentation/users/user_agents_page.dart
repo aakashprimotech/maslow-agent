@@ -1,5 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/painting.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:maslow_agents/presentation/users/view_all_myagents.dart';
+import 'package:maslow_agents/presentation/users/viewall_marketplaces_page.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
 
 import 'package:shimmer/shimmer.dart';
@@ -29,14 +34,40 @@ class UserAgentsPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8.0),
-            const Text(
-              'Browse and select which agent you would like to work with below.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Browse and select which agent you would like to work with below.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.black87,
+                  ),
+                ),
+                InkWell(
+                  onTap: (){
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ViewallMarketplacesPage(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: const Text(
+                      'View All',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+
             Expanded(
               flex: 2,
               child: Container(
@@ -55,7 +86,6 @@ class UserAgentsPage extends StatelessWidget {
                           crossAxisSpacing: 8.0,
                           mainAxisSpacing: 8.0,
                           childAspectRatio: (MediaQuery.of(context).size.width / 3) / (MediaQuery.of(context).size.height /3.2),
-
                         ),
                         itemCount: 8,
                         itemBuilder: (context, index) {
@@ -212,14 +242,40 @@ class UserAgentsPage extends StatelessWidget {
                 ),
               ),
             ),
-            const Text(
-              'My Agents',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-                fontFamily: 'Graphik',
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'My Agents',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                    fontFamily: 'Graphik',
+                  ),
+                ),
+                InkWell(
+                  onTap: (){
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ViewAllMyagents(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: const Text(
+                      'View All',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             Expanded(
               flex: 1,
@@ -342,8 +398,8 @@ class UserAgentsPage extends StatelessWidget {
                                     children: [
                                       Text(
                                         agentFlow.flowName.capitalize() ?? "N/A",
-                                        style: const TextStyle(
-                                          fontSize: 14,
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -364,9 +420,8 @@ class UserAgentsPage extends StatelessWidget {
                                     agentFlow.description,
                                     maxLines: 4,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12),
+                                    style:  TextStyle(fontSize: 12.sp),
                                   ),
-                                  const Spacer(),
                                 ],
                               ),
                               Positioned(
