@@ -151,7 +151,7 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search agents...',
+                    hintText: 'Search marketplace...',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: IconButton(
                       icon: Row(

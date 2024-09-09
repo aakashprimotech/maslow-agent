@@ -41,16 +41,21 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
     super.initState();
 
     _getCurrentUser();
-    _textFieldFocusNode.addListener(() {
-      if (_textFieldFocusNode.hasFocus && _userInformationsController.text.isNotEmpty && widget.agentFlowModel.dummyQuestion!=null && widget.agentFlowModel.dummyAnswer!=null) {
-        _textFieldFocusNode.unfocus();
-        _showTrialDialog();
-      }
-    });
+
   }
   Future<void> _getCurrentUser() async {
     currentUser = await SessionManager.getUser();
     if (currentUser != null) {
+      _textFieldFocusNode.addListener(() {
+      if (_textFieldFocusNode.hasFocus &&
+          _userInformationsController.text.isNotEmpty &&
+          widget.agentFlowModel.dummyQuestion != null &&
+          widget.agentFlowModel.dummyAnswer != null &&
+          currentUser?.authType != 'admin') {
+        _textFieldFocusNode.unfocus();
+        _showTrialDialog();
+      }
+    });
 
       bool isUserInMarketplace = widget.agentFlowModel.marketplaceUsers
           ?.any((ref) => ref.id == UserService().getUserReference()?.id) ?? false;
@@ -421,7 +426,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                     alignment: Alignment.centerRight,
                     child: InkWell(
                       onTap: () async {
-                        if(widget.agentFlowModel.dummyQuestion!=null && widget.agentFlowModel.dummyAnswer!=null){
+                        if(widget.agentFlowModel.dummyQuestion!=null && widget.agentFlowModel.dummyAnswer!=null &&
+                            currentUser?.authType != 'admin'){
                           _showTrialDialog();
                         }else{
                           if(_userInformationsController.text.isNotEmpty){
