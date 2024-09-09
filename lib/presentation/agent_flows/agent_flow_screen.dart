@@ -42,7 +42,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
 
     _getCurrentUser();
     _textFieldFocusNode.addListener(() {
-      if (_textFieldFocusNode.hasFocus && _userInformationsController.text.isNotEmpty) {
+      if (_textFieldFocusNode.hasFocus && _userInformationsController.text.isNotEmpty && widget.agentFlowModel.dummyQuestion!=null && widget.agentFlowModel.dummyAnswer!=null) {
         _textFieldFocusNode.unfocus();
         _showTrialDialog();
       }
@@ -383,10 +383,10 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                   const SizedBox(height: 20),
                   InkWell(
                     onTap: (){
-                      if (_userInformationsController.text.isNotEmpty) {
+                   /*   if (_userInformationsController.text.isNotEmpty) {
                         _textFieldFocusNode.unfocus();
                         _showTrialDialog();
-                      }
+                      }*/
                     },
                     child: TextFormField(
                       focusNode: _textFieldFocusNode,

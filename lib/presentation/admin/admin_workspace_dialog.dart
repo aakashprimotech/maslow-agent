@@ -162,29 +162,16 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
   String? dialogHeaderText;
 
   Future<void> _addWorkspace(List<String> emailList) async {
-    // Ensure that emailList is not empty
-    if (emailList.isEmpty) {
-      context.showCustomSnackBar('No emails provided.');
-      return;
-    }
-
-    // Retrieve user references for the provided email list
     final userReferences = await _getUserReferences(emailList);
 
-    if (userReferences.isEmpty) {
-      context.showCustomSnackBar('No users found for the provided emails.');
-      return;
-    }
-
-    // Your other workspace data
     String socketUrl = _socketsUrlController.text.trim();
     String apiUrl = _apiUrlController.text.trim();
     String headerToken = _tokenHeader.text.trim();
     String authHeaderKey = _authHeaderKeyController.text.trim();
     String flowName = _flowNameController.text.trim();
 
-    if (socketUrl.isEmpty || apiUrl.isEmpty) {
-      context.showCustomSnackBar('Please provide both socket and API URL');
+    if (socketUrl.isEmpty || apiUrl.isEmpty || flowName.isEmpty) {
+      context.showCustomSnackBar('Please provide Flow name,sockets url and API URL');
       return;
     }
 
@@ -251,7 +238,6 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
     }
 
     final userRef = UserService().getUserReference();
-    // Retrieve user references for the provided email list
     final userReferences = await _getUserReferences(_emailList);
 
 

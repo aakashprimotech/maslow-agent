@@ -10,6 +10,7 @@ import '../../service/shared_pref_service.dart';
 import '../../service/user_service.dart';
 import '../../utils/colors.dart';
 import '../agent_flows/agent_flow_model.dart';
+import '../common/user_popup_menu.dart';
 import '../notification/notification_screen.dart';
 
 class UserHomePage extends StatefulWidget {
@@ -119,8 +120,7 @@ class _UserHomePageState extends State<UserHomePage> {
                 ),
               ),
             ),
-
-            Container(
+/*            Container(
                 alignment: Alignment.center,
                 margin: const EdgeInsets.only(right: 32),
                 height: 30,
@@ -143,7 +143,52 @@ class _UserHomePageState extends State<UserHomePage> {
                     ),
                   ],
                 )
-            )
+            ),*/
+            PopupMenuButton<String>(
+              position: PopupMenuPosition.under,
+              offset: Offset(-25, 15),  // Adjusts the position of the menu
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              onSelected: (value) {
+                if (value == 'logout') {
+                  _logout();
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                return [
+                  PopupMenuItem<String>(
+                    value: 'profile',
+                    child: UserPopupMenu(
+                      user: currentUser,
+                      onLogout: _logout,
+                    ),
+                  ),
+                ];
+              },
+              child: Container(
+                alignment: Alignment.center,
+                margin: const EdgeInsets.only(right: 32),
+                height: 30,
+                child: Row(
+                  children: [
+                    Text(
+                      currentUser?.name != null ? "${currentUser!.name.capitalize()}" : "N/A",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.primaryColor,
+                        fontFamily: 'Graphik',
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    const CircleAvatar(
+                      backgroundImage: AssetImage('assets/images/user_placeholder.jpg'),
+                      radius: 13,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
         body: Column(
