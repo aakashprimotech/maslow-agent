@@ -372,10 +372,11 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                       CachedStreamBuilder(
                         marketplaceId: widget.marketplaceReference!.id,
                         onTap: (dummyQuestion, dummyAnswer) {
-
                           setState(() {
                             _userInformationsController.text = dummyQuestion;
-                            agentReasoningList = dummyAnswer as List<AgentReasoning>;
+                            agentReasoningList = dummyAnswer
+                                .map((item) => AgentReasoning.fromJson(item as Map<String, dynamic>))
+                                .toList();
                           });
                         },
                       )
@@ -649,6 +650,7 @@ class _CachedStreamBuilderState extends State<CachedStreamBuilder> {
         .collection('marketplace')
         .doc(widget.marketplaceId)
         .collection(UserService().getUserReference()!.id)
+        .orderBy('createdAt', descending: true) // Order by 'createdAt' field in descending order
         .snapshots();
   }
 
