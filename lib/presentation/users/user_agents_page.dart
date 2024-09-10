@@ -434,7 +434,7 @@ class UserAgentsPage extends StatelessWidget {
                                       MaterialPageRoute(
                                         builder: (context) => AgentFlowScreen(
                                           agentFlowModel: agentFlow,
-                                          // marketplaceReference: doc.reference,
+                                          marketplaceReference: doc.reference,
                                         ),
                                       ),
                                     );

@@ -13,7 +13,6 @@ import 'dart:convert';
 import 'agent_flow_model.dart';
 import 'agents_data_response.dart';
 
-
 class AgentFlowScreen extends StatefulWidget {
   AgentFlowModel agentFlowModel;
   DocumentReference? marketplaceReference;
@@ -35,30 +34,32 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
   final FocusNode _textFieldFocusNode = FocusNode();
   UserModel? currentUser;
 
-
   @override
   void initState() {
     super.initState();
-
     _getCurrentUser();
-
   }
+
   Future<void> _getCurrentUser() async {
     currentUser = await SessionManager.getUser();
+
     if (currentUser != null) {
       _textFieldFocusNode.addListener(() {
-      if (_textFieldFocusNode.hasFocus &&
-          _userInformationsController.text.isNotEmpty &&
-          widget.agentFlowModel.dummyQuestion != null &&
-          widget.agentFlowModel.dummyAnswer != null &&
-          currentUser?.authType != 'admin') {
-        _textFieldFocusNode.unfocus();
-        _showTrialDialog();
-      }
-    });
+        if (_textFieldFocusNode.hasFocus &&
+            _userInformationsController.text.isNotEmpty &&
+            widget.agentFlowModel.dummyQuestion != null &&
+            widget.agentFlowModel.dummyAnswer != null &&
+            currentUser?.authType != 'admin') {
+          _textFieldFocusNode.unfocus();
+          _showTrialDialog();
+        }
+      });
 
       bool isUserInMarketplace = widget.agentFlowModel.marketplaceUsers
-          ?.any((ref) => ref.id == UserService().getUserReference()?.id) ?? false;
+          ?.any((ref) =>
+      ref.id == UserService()
+          .getUserReference()
+          ?.id) ?? false;
 
       setState(() async {
         if (isUserInMarketplace) {
@@ -69,14 +70,15 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         if (widget.agentFlowModel.dummyQuestion != null &&
             widget.agentFlowModel.dummyAnswer != null &&
             currentUser?.authType != 'admin') {
-          _userInformationsController.text = widget.agentFlowModel.dummyQuestion!;
+          _userInformationsController.text =
+          widget.agentFlowModel.dummyQuestion!;
           // agentReasoningList = widget.agentFlowModel.dummyAnswer ?? [];
-            for (final item in widget.agentFlowModel.dummyAnswer!) {
-              await Future.delayed(const Duration(seconds: 1));
-              setState(() {
-                agentReasoningList.add(item);
-                _scrollToBottom();
-              });
+          for (final item in widget.agentFlowModel.dummyAnswer!) {
+            await Future.delayed(const Duration(seconds: 1));
+            setState(() {
+              agentReasoningList.add(item);
+              _scrollToBottom();
+            });
           }
         } else {
           _connectToSocket();
@@ -88,27 +90,6 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       });
     }
   }
-
-/*  Future<void> _getCurrentUser() async {
-    currentUser = await SessionManager.getUser();
-    if (currentUser != null) {
-
-      setState(() {
-        if(widget.agentFlowModel.dummyQuestion != null &&
-            widget.agentFlowModel.dummyAnswer != null &&
-            currentUser?.authType != 'admin'){
-          _userInformationsController.text = widget.agentFlowModel.dummyQuestion!;
-          agentReasoningList = widget.agentFlowModel.dummyAnswer ??[];
-        }else{
-          _connectToSocket();
-        }
-
-        if(currentUser?.authType=='admin'){
-          _connectToSocket();
-        }
-      });
-    }
-  }*/
 
   void _connectToSocket() {
     socket = Io.io(widget.agentFlowModel.socketUrl, <String, dynamic>{
@@ -210,7 +191,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
               child: const Text('Cancel'),
             ),
             InkWell(
-              onTap: (){
+              onTap: () {
                 Navigator.of(context).pop();
                 _handleSubmit();
               },
@@ -258,7 +239,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Please provide additional information for the admin.'),
+              const Text(
+                  'Please provide additional information for the admin.'),
               const SizedBox(height: 20),
               TextFormField(
                 maxLines: 3,
@@ -283,7 +265,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
             InkWell(
               onTap: () async {
                 Navigator.of(context).pop();
-                if(queryController.text.isNotEmpty){
+                if (queryController.text.isNotEmpty) {
                   await _saveInformation(queryController.text);
                 }
               },
@@ -325,8 +307,9 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         query: query,
         email: currentUser?.email,
         agentFlowRef: widget.marketplaceReference!,
-        createdAt: Timestamp.now(), status: false,
-        isAccepted : false,
+        createdAt: Timestamp.now(),
+        status: false,
+        isAccepted: false,
       );
 
       FirebaseFirestore.instance
@@ -364,124 +347,167 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
             margin: const EdgeInsets.only(right: 30),
             child: Text(
               widget.agentFlowModel.flowName,
-              style: const TextStyle(fontSize: 14, color: Colors.black87,fontFamily: 'Graphik',
+              style: const TextStyle(
+                fontSize: 14, color: Colors.black87, fontFamily: 'Graphik',
               ),
             ),
           ),
         ],
 
       ),
-      body: Column(
+      body: Row(
         children: [
-          Container(color: AppColors.textFieldBorderColor, height: 1,),
+          Container(
+            width: 250,
+            padding: const EdgeInsets.only(top: 10),
+            color: AppColors.messageBgColor.withAlpha(50),
+            child: Column(
+              children: [
+                Container(
+                  width: 250,
+                  padding: const EdgeInsets.only(top: 10),
+                  color: AppColors.messageBgColor.withAlpha(50),
+                  child: Column(
+                    children: [
+                      CachedStreamBuilder(
+                        marketplaceId: widget.marketplaceReference!.id,
+                        onTap: (dummyQuestion, dummyAnswer) {
+
+                          setState(() {
+                            _userInformationsController.text = dummyQuestion;
+                            agentReasoningList = dummyAnswer as List<AgentReasoning>;
+                          });
+                        },
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
-            child: Container(
-              color: AppColors.backgroundColor,
-              padding: const EdgeInsets.fromLTRB(100, 30, 100, 5),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Hello there, how can I help?",
-                    style: TextStyle(color: Colors.black87, fontSize: 16),
-                  ),
-                  const SizedBox(height: 20),
-                  InkWell(
-                    onTap: (){
-                   /*   if (_userInformationsController.text.isNotEmpty) {
-                        _textFieldFocusNode.unfocus();
-                        _showTrialDialog();
-                      }*/
-                    },
-                    child: TextFormField(
-                      focusNode: _textFieldFocusNode,
-                      controller: _userInformationsController,
-                      decoration: InputDecoration(
-                        hintText: "Enter your query here...",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.grey, width: 1.0),
+            child: Column(
+              children: [
+                Container(color: AppColors.textFieldBorderColor, height: 1,),
+                Expanded(
+                  child: Container(
+                    color: AppColors.backgroundColor,
+                    padding: const EdgeInsets.fromLTRB(100, 30, 100, 5),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Hello there, how can I help?",
+                          style: TextStyle(color: Colors.black87, fontSize: 16),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter your query';
-                        }
-                        return null;
-                      },
-                      keyboardType: TextInputType.text,
-                      minLines: 3,
-                      maxLines: null,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: InkWell(
-                      onTap: () async {
-                        if(widget.agentFlowModel.dummyQuestion!=null && widget.agentFlowModel.dummyAnswer!=null &&
-                            currentUser?.authType != 'admin'){
-                          _showTrialDialog();
-                        }else{
-                          if(_userInformationsController.text.isNotEmpty){
-                            sendQuery();
-                          }
-                        }
-                      },
-                      child: Container(
-                        height: 50,
-                        margin: const EdgeInsets.only(top: 15,bottom: 15),
-                        alignment: Alignment.center,
-                        width: 80,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryColor,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.2),
-                              spreadRadius: 3,
-                              blurRadius: 7,
-                              offset: const Offset(0, 1),
+                        const SizedBox(height: 20),
+                        InkWell(
+                          onTap: () {
+                            /*   if (_userInformationsController.text.isNotEmpty) {
+                              _textFieldFocusNode.unfocus();
+                              _showTrialDialog();
+                            }*/
+                          },
+                          child: TextFormField(
+                            focusNode: _textFieldFocusNode,
+                            controller: _userInformationsController,
+                            decoration: InputDecoration(
+                              hintText: "Enter your query here...",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: const BorderSide(color: Colors.grey,
+                                    width: 1.0),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: const BorderSide(color: Colors.grey,
+                                    width: 1.0),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: const BorderSide(color: Colors.grey,
+                                    width: 1.0),
+                              ),
                             ),
-                          ],
-                          borderRadius: const BorderRadius.all(Radius.circular(10)),
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return 'Please enter your query';
+                              }
+                              return null;
+                            },
+                            keyboardType: TextInputType.text,
+                            minLines: 3,
+                            maxLines: null,
+                          ),
                         ),
-                        padding: const EdgeInsets.all(5),
-                        child: !isLoading
-                            ? const Text(
-                          'Submit',
-                          style: TextStyle(fontSize: 15, color: Colors.white),
-                        )
-                            : const CircularProgressIndicator(
-                          color: Colors.white,
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: InkWell(
+                            onTap: () async {
+                              if (widget.agentFlowModel.dummyQuestion != null &&
+                                  widget.agentFlowModel.dummyAnswer != null &&
+                                  currentUser?.authType != 'admin') {
+                                _showTrialDialog();
+                              } else {
+                                if (_userInformationsController.text.isNotEmpty) {
+                                  sendQuery();
+                                }
+                              }
+                            },
+                            child: Container(
+                              height: 50,
+                              margin: const EdgeInsets.only(top: 15, bottom: 15),
+                              alignment: Alignment.center,
+                              width: 80,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    spreadRadius: 3,
+                                    blurRadius: 7,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                                borderRadius: const BorderRadius.all(Radius.circular(
+                                    10)),
+                              ),
+                              padding: const EdgeInsets.all(5),
+                              child: !isLoading
+                                  ? const Text(
+                                'Submit',
+                                style: TextStyle(fontSize: 15, color: Colors.white),
+                              )
+                                  : const CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        Expanded(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            // Attach the ScrollController
+                            itemCount: agentReasoningList.length +
+                                (isAgentLoading ? 1 : 0),
+                            // Add 1 more for the loading indicator
+                            itemBuilder: (context, index) {
+                              if (index < agentReasoningList.length) {
+                                var reasoning = agentReasoningList[index];
+                                return _subtasks(reasoning);
+                              } else if (isAgentLoading) {
+                                return _loadingIndicator();
+                              } else {
+                                return const SizedBox.shrink();
+                              }
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Expanded(
-                    child: ListView.builder(
-                      controller: _scrollController, // Attach the ScrollController
-                      itemCount: agentReasoningList.length + (isAgentLoading ? 1 : 0), // Add 1 more for the loading indicator
-                      itemBuilder: (context, index) {
-                        if (index < agentReasoningList.length) {
-                          var reasoning = agentReasoningList[index];
-                          return _subtasks(reasoning);
-                        } else if (isAgentLoading) {
-                          return _loadingIndicator();
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -500,7 +526,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Lottie.asset('assets/animations/next_agent_lottie.json',height: 35,width: 35),
+          Lottie.asset('assets/animations/next_agent_lottie.json', height: 35,
+              width: 35),
           const SizedBox(width: 10),
           Text(
             'Loading details for $currentAgentName...',
@@ -510,7 +537,6 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       ),
     );
   }
-
 
   Widget _subtasks(AgentReasoning reasoning) {
     return Container(
@@ -525,7 +551,9 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         children: [
           Text(
             reasoning.agentName,
-            style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w700),
+            style: const TextStyle(color: Colors.black87,
+                fontSize: 20,
+                fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 10),
           Divider(color: Colors.grey.withAlpha(150)),
@@ -534,13 +562,14 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
               ? Column(
             children: List.generate(reasoning.messages?.length ?? 0, (index) {
               return Padding(
-                padding: const EdgeInsets.only(top: 20),
+                  padding: const EdgeInsets.only(top: 20),
                   child: MarkdownBody(data: reasoning.messages![index],)
               );
             }),
           )
               : Text(
-            reasoning.instructions?.isEmpty == true ? "Finished" : reasoning.instructions!,
+            reasoning.instructions?.isEmpty == true ? "Finished" : reasoning
+                .instructions!,
             style: const TextStyle(color: Colors.black87, fontSize: 16),
           ),
         ],
@@ -576,6 +605,16 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
           'dummyQuestion': _userInformationsController.text,
           'dummyAnswer': agentReasoningList.map((e) => e.toJson()).toList(),
         });
+
+        await FirebaseFirestore.instance
+            .collection('marketplace')
+            .doc(widget.marketplaceReference?.id)
+            .collection(UserService().getUserReference()!.id)
+            .add({
+          'dummyQuestion': _userInformationsController.text,
+          'dummyAnswer': agentReasoningList.map((e) => e.toJson()).toList(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       }
     } catch (e) {
       debugPrint('Error sending query: $e');
@@ -584,5 +623,78 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         isLoading = false;
       });
     }
+  }
+}
+
+typedef VoidCallbackAction = void Function(String, List<dynamic>);
+
+
+class CachedStreamBuilder extends StatefulWidget {
+  final String marketplaceId;
+  final VoidCallbackAction onTap;
+
+  const CachedStreamBuilder({Key? key, required this.marketplaceId,     required this.onTap,}) : super(key: key);
+
+  @override
+  _CachedStreamBuilderState createState() => _CachedStreamBuilderState();
+}
+
+class _CachedStreamBuilderState extends State<CachedStreamBuilder> {
+  late Stream<QuerySnapshot> _streamSnapshot;
+
+  @override
+  void initState() {
+    super.initState();
+    _streamSnapshot = FirebaseFirestore.instance
+        .collection('marketplace')
+        .doc(widget.marketplaceId)
+        .collection(UserService().getUserReference()!.id)
+        .snapshots();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _streamSnapshot,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Container(height: 600, alignment: Alignment.center, child: const Text('No Data Available'));
+        } else {
+          var userDataList = snapshot.data!.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: userDataList.length,
+            itemBuilder: (context, index) {
+              var data = userDataList[index];
+              String dummyQuestion = data['dummyQuestion'] ?? 'No Question';
+              List<dynamic> dummyAnswer = data['dummyAnswer'] ?? []; // Ensure dummyAnswer is a List<dynamic>
+
+              return InkWell(
+                onTap: () {
+                  widget.onTap(dummyQuestion, dummyAnswer);
+                },
+                child: ListTile(
+                  title: Text(
+                    dummyQuestion,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        }
+      },
+    );
   }
 }
