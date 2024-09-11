@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lottie/lottie.dart';
+import 'package:maslow_agents/utils/timestamp_converter.dart';
 import 'package:socket_io_client/socket_io_client.dart' as Io;
 import 'package:http/http.dart' as http;
 import '../../model/notification.dart';
@@ -12,6 +13,7 @@ import '../../utils/colors.dart';
 import 'dart:convert';
 import 'agent_flow_model.dart';
 import 'agents_data_response.dart';
+import 'cache_agent_flows.dart';
 
 class AgentFlowScreen extends StatefulWidget {
   AgentFlowModel agentFlowModel;
@@ -55,11 +57,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         }
       });
 
-      bool isUserInMarketplace = widget.agentFlowModel.marketplaceUsers
-          ?.any((ref) =>
-      ref.id == UserService()
-          .getUserReference()
-          ?.id) ?? false;
+      bool isUserInMarketplace = widget.agentFlowModel.marketplaceUsers?.any((ref) =>
+      ref.id == UserService().getUserReference()?.id) ?? false;
 
       setState(() async {
         if (isUserInMarketplace) {
@@ -70,9 +69,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         if (widget.agentFlowModel.dummyQuestion != null &&
             widget.agentFlowModel.dummyAnswer != null &&
             currentUser?.authType != 'admin') {
-          _userInformationsController.text =
-          widget.agentFlowModel.dummyQuestion!;
-          // agentReasoningList = widget.agentFlowModel.dummyAnswer ?? [];
+          _userInformationsController.text = widget.agentFlowModel.dummyQuestion!;
           for (final item in widget.agentFlowModel.dummyAnswer!) {
             await Future.delayed(const Duration(seconds: 1));
             setState(() {
@@ -340,7 +337,6 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         backgroundColor: AppColors.backgroundColor,
         elevation: 0,
         titleSpacing: 0,
-
         title: Image.asset('assets/images/maslow_logo.png', height: 22),
         actions: [
           Container(
@@ -357,35 +353,35 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       ),
       body: Row(
         children: [
-          Container(
-            width: 250,
-            padding: const EdgeInsets.only(top: 10),
-            color: AppColors.messageBgColor.withAlpha(50),
-            child: Column(
-              children: [
-                Container(
-                  width: 250,
-                  padding: const EdgeInsets.only(top: 10),
-                  color: AppColors.messageBgColor.withAlpha(50),
-                  child: Column(
-                    children: [
-                      CachedStreamBuilder(
-                        marketplaceId: widget.marketplaceReference!.id,
-                        onTap: (dummyQuestion, dummyAnswer) {
-                          setState(() {
-                            _userInformationsController.text = dummyQuestion;
-                            agentReasoningList = dummyAnswer
-                                .map((item) => AgentReasoning.fromJson(item as Map<String, dynamic>))
-                                .toList();
-                          });
-                        },
-                      )
-                    ],
+          (widget.agentFlowModel.marketplaceUsers!.contains(UserService().getUserReference()) && widget.agentFlowModel.marketplaceUsers!=null) ?
+            Container(
+              width: 250,
+              padding: const EdgeInsets.only(top: 10),
+              child: Column(
+                children: [
+                  Container(
+                    width: 250,
+                    padding: const EdgeInsets.only(top: 10),
+                    color: AppColors.messageBgColor.withAlpha(50),
+                    child: Column(
+                      children: [
+                        CachedStreamBuilder(
+                          marketplaceId: widget.marketplaceReference!.id,
+                          onTap: (dummyQuestion, dummyAnswer) {
+                            setState(() {
+                              _userInformationsController.text = dummyQuestion;
+                              agentReasoningList = dummyAnswer
+                                  .map((item) => AgentReasoning.fromJson(item as Map<String, dynamic>))
+                                  .toList();
+                            });
+                          },
+                        )
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            ) : const SizedBox(),
           Expanded(
             child: Column(
               children: [
@@ -403,12 +399,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                         ),
                         const SizedBox(height: 20),
                         InkWell(
-                          onTap: () {
-                            /*   if (_userInformationsController.text.isNotEmpty) {
-                              _textFieldFocusNode.unfocus();
-                              _showTrialDialog();
-                            }*/
-                          },
+                          onTap: () {},
                           child: TextFormField(
                             focusNode: _textFieldFocusNode,
                             controller: _userInformationsController,
@@ -488,10 +479,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                         Expanded(
                           child: ListView.builder(
                             controller: _scrollController,
-                            // Attach the ScrollController
                             itemCount: agentReasoningList.length +
                                 (isAgentLoading ? 1 : 0),
-                            // Add 1 more for the loading indicator
                             itemBuilder: (context, index) {
                               if (index < agentReasoningList.length) {
                                 var reasoning = agentReasoningList[index];
@@ -624,79 +613,5 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         isLoading = false;
       });
     }
-  }
-}
-
-typedef VoidCallbackAction = void Function(String, List<dynamic>);
-
-
-class CachedStreamBuilder extends StatefulWidget {
-  final String marketplaceId;
-  final VoidCallbackAction onTap;
-
-  const CachedStreamBuilder({Key? key, required this.marketplaceId,     required this.onTap,}) : super(key: key);
-
-  @override
-  _CachedStreamBuilderState createState() => _CachedStreamBuilderState();
-}
-
-class _CachedStreamBuilderState extends State<CachedStreamBuilder> {
-  late Stream<QuerySnapshot> _streamSnapshot;
-
-  @override
-  void initState() {
-    super.initState();
-    _streamSnapshot = FirebaseFirestore.instance
-        .collection('marketplace')
-        .doc(widget.marketplaceId)
-        .collection(UserService().getUserReference()!.id)
-        .orderBy('createdAt', descending: true) // Order by 'createdAt' field in descending order
-        .snapshots();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _streamSnapshot,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Container(height: 600, alignment: Alignment.center, child: const Text('No Data Available'));
-        } else {
-          var userDataList = snapshot.data!.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
-
-          return ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: userDataList.length,
-            itemBuilder: (context, index) {
-              var data = userDataList[index];
-              String dummyQuestion = data['dummyQuestion'] ?? 'No Question';
-              List<dynamic> dummyAnswer = data['dummyAnswer'] ?? []; // Ensure dummyAnswer is a List<dynamic>
-
-              return InkWell(
-                onTap: () {
-                  widget.onTap(dummyQuestion, dummyAnswer);
-                },
-                child: ListTile(
-                  title: Text(
-                    dummyQuestion,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        }
-      },
-    );
   }
 }

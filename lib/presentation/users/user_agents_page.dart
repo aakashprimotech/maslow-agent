@@ -380,7 +380,6 @@ class UserAgentsPage extends StatelessWidget {
                           width: 280.0,
                           margin: const EdgeInsets.only(right: 8.0),
                           padding: const EdgeInsets.all(12.0),
-                          // Reduced padding
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8.0),
@@ -405,8 +404,7 @@ class UserAgentsPage extends StatelessWidget {
                                       ),
                                       if (agentFlow.category != "Uncategorized")
                                         Text(
-                                          agentFlow.category.capitalize() ??
-                                              "N/A",
+                                          agentFlow.category.capitalize() ?? "N/A",
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: Color(0xFF40bc92),

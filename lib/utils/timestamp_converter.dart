@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 extension DateTimeExtensions on DateTime {
@@ -12,4 +13,11 @@ extension ReadableFormat on DateTime {
   String toReadableFormat() {
     return DateFormat('MM-dd-yyyy').format(this);
   }
+}
+
+String formatTimestamp(Timestamp timestamp) {
+  DateTime dateTime = timestamp.toDate();  // Convert Firebase Timestamp to Dart DateTime
+  // Format date and time using intl package
+  String formattedDate = DateFormat('dd/MM/yyyy hh:mm a').format(dateTime);
+  return formattedDate;
 }

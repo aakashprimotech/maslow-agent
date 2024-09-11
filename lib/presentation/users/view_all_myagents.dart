@@ -653,7 +653,7 @@ class _ViewAllMyagentsState extends State<ViewAllMyagents> {
                           itemCount: filteredAgentFlows.length,
                           itemBuilder: (context, index) {
                             var agentFlow = filteredAgentFlows[index];
-                            var doc = filteredAgentFlows[index];
+                            var doc = snapshot.data!.docs[index];
 
                             return Container(
                               width: 280.0,
@@ -713,7 +713,7 @@ class _ViewAllMyagentsState extends State<ViewAllMyagents> {
                                           MaterialPageRoute(
                                             builder: (context) => AgentFlowScreen(
                                               agentFlowModel: agentFlow,
-                                              // marketplaceReference: doc.reference,
+                                              marketplaceReference: doc.reference,
                                             ),
                                           ),
                                         );
