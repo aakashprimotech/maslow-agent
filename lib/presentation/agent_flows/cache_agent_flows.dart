@@ -10,7 +10,7 @@ class CachedStreamBuilder extends StatefulWidget {
   final String marketplaceId;
   final VoidCallbackAction onTap;
 
-  const CachedStreamBuilder({Key? key, required this.marketplaceId,     required this.onTap,}) : super(key: key);
+  const CachedStreamBuilder({Key? key, required this.marketplaceId, required this.onTap,}) : super(key: key);
 
   @override
   _CachedStreamBuilderState createState() => _CachedStreamBuilderState();

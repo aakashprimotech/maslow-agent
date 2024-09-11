@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'agents_data_response.dart';
+import 'agent_flow_example.dart';
 
 class AgentFlowModel {
   final String flowName;
@@ -13,9 +12,8 @@ class AgentFlowModel {
   final bool isPublished;
   final String category;
   final Authentication authentication;
-  String? dummyQuestion;
-  List<AgentReasoning>? dummyAnswer;
   List<DocumentReference>? marketplaceUsers;
+  List<AgentFlowExample>? agentFlowExamples;
 
   AgentFlowModel({
     required this.flowName,
@@ -28,9 +26,8 @@ class AgentFlowModel {
     this.category = '',
     this.isPublished = false,
     required this.authentication,
-    this.dummyQuestion,
-    this.dummyAnswer,
-    this.marketplaceUsers, // Initialize new field
+    this.marketplaceUsers,
+    this.agentFlowExamples,
   });
 
   factory AgentFlowModel.fromFirestore(DocumentSnapshot doc) {
@@ -47,18 +44,16 @@ class AgentFlowModel {
       category: data['category'] ?? '',
       isPublished: data['isPublished'] ?? false,
       authentication: Authentication.fromMap(data['authentication'] as Map<String, dynamic>),
-      dummyQuestion: data['dummyQuestion'] as String?,
-      dummyAnswer: (data['dummyAnswer'] as List<dynamic>?)
-          ?.map((item) => AgentReasoning.fromJson(item as Map<String, dynamic>))
-          .toList(),
       marketplaceUsers: (data['marketplaceUsers'] != null && data['marketplaceUsers'] is List)
           ? (data['marketplaceUsers'] as List<dynamic>)
           .map((item) => item as DocumentReference)
           .toList()
-          : null, // Return null if marketplaceUsers doesn't exist or is null
-/*      marketplaceUsers: (data['marketplaceUsers'] as List<dynamic>?)
-          ?.map((item) => item as DocumentReference) // No conversion needed
-          .toList(),*/
+          : null,
+      agentFlowExamples: (data['agentFlowExamples'] != null && data['agentFlowExamples'] is List)
+          ? (data['agentFlowExamples'] as List<AgentFlowExample>)
+          .map((item) => item)
+          .toList()
+          : null,
     );
   }
 
@@ -75,12 +70,10 @@ class AgentFlowModel {
       'category': category,
       'isPublished': isPublished,
       'authentication': authentication.toMap(),
-      'dummyQuestion': dummyQuestion,
-      'dummyAnswer': dummyAnswer?.map((item) => item.toJson()).toList(),
-      'marketplaceUsers': marketplaceUsers, // Directly store DocumentReference
+      'marketplaceUsers': marketplaceUsers,
+      'agentFlowExamples': agentFlowExamples,
     };
   }
-
 }
 
 class Authentication {

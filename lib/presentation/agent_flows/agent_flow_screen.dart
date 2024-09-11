@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lottie/lottie.dart';
+import 'package:maslow_agents/utils/captalize_string.dart';
 import 'package:maslow_agents/utils/timestamp_converter.dart';
 import 'package:socket_io_client/socket_io_client.dart' as Io;
 import 'package:http/http.dart' as http;
@@ -11,6 +12,7 @@ import '../../service/shared_pref_service.dart';
 import '../../service/user_service.dart';
 import '../../utils/colors.dart';
 import 'dart:convert';
+import 'agent_flow_example.dart';
 import 'agent_flow_model.dart';
 import 'agents_data_response.dart';
 import 'cache_agent_flows.dart';
@@ -36,10 +38,24 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
   final FocusNode _textFieldFocusNode = FocusNode();
   UserModel? currentUser;
 
+  List<AgentFlowExample> _examples = [];
+  String? _selectedLabel;
+
   @override
   void initState() {
     super.initState();
     _getCurrentUser();
+    _loadExamples();
+  }
+
+  Future<void> _loadExamples() async {
+    List<AgentFlowExample> examples = await fetchExamples(widget.marketplaceReference!.id);
+    setState(() {
+      _examples = examples;
+      if (_examples.isNotEmpty) {
+        _selectedLabel = _examples[0].label; // Optionally set a default selected label
+      }
+    });
   }
 
   Future<void> _getCurrentUser() async {
@@ -49,8 +65,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       _textFieldFocusNode.addListener(() {
         if (_textFieldFocusNode.hasFocus &&
             _userInformationsController.text.isNotEmpty &&
-            widget.agentFlowModel.dummyQuestion != null &&
-            widget.agentFlowModel.dummyAnswer != null &&
+            widget.agentFlowModel.agentFlowExamples != null &&
+            // widget.agentFlowModel.dummyAnswer != null &&
             currentUser?.authType != 'admin') {
           _textFieldFocusNode.unfocus();
           _showTrialDialog();
@@ -61,22 +77,22 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       ref.id == UserService().getUserReference()?.id) ?? false;
 
       setState(() async {
-        if (isUserInMarketplace) {
+      /*  if (isUserInMarketplace) {
           widget.agentFlowModel.dummyQuestion = null;
           widget.agentFlowModel.dummyAnswer = null;
-        }
+        }*/
 
-        if (widget.agentFlowModel.dummyQuestion != null &&
-            widget.agentFlowModel.dummyAnswer != null &&
+        if (widget.agentFlowModel.agentFlowExamples != null &&
+            // widget.agentFlowModel.dummyAnswer != null &&
             currentUser?.authType != 'admin') {
-          _userInformationsController.text = widget.agentFlowModel.dummyQuestion!;
-          for (final item in widget.agentFlowModel.dummyAnswer!) {
+          // _userInformationsController.text = widget.agentFlowModel.dummyQuestion!;
+        /*  for (final item in widget.agentFlowModel.dummyAnswer!) {
             await Future.delayed(const Duration(seconds: 1));
             setState(() {
               agentReasoningList.add(item);
               _scrollToBottom();
             });
-          }
+          }*/
         } else {
           _connectToSocket();
         }
@@ -432,49 +448,71 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                             maxLines: null,
                           ),
                         ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: InkWell(
-                            onTap: () async {
-                              if (widget.agentFlowModel.dummyQuestion != null &&
-                                  widget.agentFlowModel.dummyAnswer != null &&
-                                  currentUser?.authType != 'admin') {
-                                _showTrialDialog();
-                              } else {
-                                if (_userInformationsController.text.isNotEmpty) {
-                                  sendQuery();
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _examples.isNotEmpty ? DropdownButton<String>(
+                              value: _selectedLabel,
+                              items: _examples.map((example) {
+                                return DropdownMenuItem<String>(
+                                  value: example.label,
+                                        child: Text(
+                                          example.label.capitalize() ?? "",
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black87),
+                                        ),
+                                      );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedLabel = newValue;
+                                });
+                              },
+                            ) :const SizedBox(),
+                            InkWell(
+                              onTap: () async {
+                                if (widget.agentFlowModel.agentFlowExamples != null &&
+                                    // widget.agentFlowModel.dummyAnswer != null &&
+                                    currentUser?.authType != 'admin') {
+                                  _showTrialDialog();
+                                } else {
+                                  if (_userInformationsController.text.isNotEmpty) {
+                                    sendQuery();
+                                  }
                                 }
-                              }
-                            },
-                            child: Container(
-                              height: 50,
-                              margin: const EdgeInsets.only(top: 15, bottom: 15),
-                              alignment: Alignment.center,
-                              width: 80,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryColor,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.2),
-                                    spreadRadius: 3,
-                                    blurRadius: 7,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ],
-                                borderRadius: const BorderRadius.all(Radius.circular(
-                                    10)),
-                              ),
-                              padding: const EdgeInsets.all(5),
-                              child: !isLoading
-                                  ? const Text(
-                                'Submit',
-                                style: TextStyle(fontSize: 15, color: Colors.white),
-                              )
-                                  : const CircularProgressIndicator(
-                                color: Colors.white,
+                              },
+                              child: Container(
+                                height: 50,
+                                margin: const EdgeInsets.only(top: 15, bottom: 15),
+                                alignment: Alignment.center,
+                                width: 80,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryColor,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.2),
+                                      spreadRadius: 3,
+                                      blurRadius: 7,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
+                                  borderRadius: const BorderRadius.all(Radius.circular(
+                                      10)),
+                                ),
+                                padding: const EdgeInsets.all(5),
+                                child: !isLoading
+                                    ? const Text(
+                                  'Submit',
+                                  style: TextStyle(fontSize: 15, color: Colors.white),
+                                )
+                                    : const CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
                         Expanded(
                           child: ListView.builder(
@@ -588,23 +626,24 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       );
 
       if (response.statusCode == 200) {
-        await FirebaseFirestore.instance
-            .collection('marketplace')
-            .doc(widget.marketplaceReference?.id)
-            .update({
-          'dummyQuestion': _userInformationsController.text,
-          'dummyAnswer': agentReasoningList.map((e) => e.toJson()).toList(),
-        });
 
-        await FirebaseFirestore.instance
-            .collection('marketplace')
-            .doc(widget.marketplaceReference?.id)
-            .collection(UserService().getUserReference()!.id)
-            .add({
-          'dummyQuestion': _userInformationsController.text,
-          'dummyAnswer': agentReasoningList.map((e) => e.toJson()).toList(),
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        if(currentUser?.authType=='admin'){
+          updateOrCreateExamplesWithoutTransaction(widget.marketplaceReference!.id,
+              AgentFlowExample(createdAt: Timestamp.now(),
+                  dummyQuestion: _userInformationsController.text,
+                  dummyAnswer: agentReasoningList.map((e) => e.toJson()).toList(),
+                  label: _userInformationsController.text));
+        }else{
+          await FirebaseFirestore.instance
+              .collection('marketplace')
+              .doc(widget.marketplaceReference?.id)
+              .collection(UserService().getUserReference()!.id)
+              .add({
+            'dummyQuestion': _userInformationsController.text,
+            'dummyAnswer': agentReasoningList.map((e) => e.toJson()).toList(),
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error sending query: $e');
@@ -614,4 +653,68 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       });
     }
   }
+
+  Future<void> updateOrCreateExamplesWithoutTransaction(String marketplaceId, AgentFlowExample newExample) async {
+
+    DocumentReference marketplaceRef = FirebaseFirestore.instance.collection('marketplace').doc(marketplaceId);
+
+    try {
+      DocumentSnapshot snapshot = await marketplaceRef.get();
+
+      if (!snapshot.exists) {
+        print("Document doesn't exist. Creating a new document.");
+        await marketplaceRef.set({
+          'examples': [newExample.toFirestore()],
+        });
+      } else {
+        print("Document exists. Updating examples field.");
+        var data = snapshot.data() as Map<String, dynamic>?;
+
+        if (data == null || !data.containsKey('examples')) {
+          print("No examples field. Creating examples.");
+          await marketplaceRef.update({
+            'examples': [newExample.toFirestore()],
+          });
+        } else {
+          print("Appending to existing examples.");
+          await marketplaceRef.update({
+            'examples': FieldValue.arrayUnion([newExample.toFirestore()]),
+          });
+        }
+      }
+      print("Operation successful!");
+    } catch (e, stackTrace) {
+      print("Error updating document: $e");
+      print("Stack trace: $stackTrace");
+    }
+  }
+
+  Future<List<AgentFlowExample>> fetchExamples(String marketplaceId) async {
+    DocumentReference marketplaceRef = FirebaseFirestore.instance.collection('marketplace').doc(marketplaceId);
+
+    try {
+      DocumentSnapshot snapshot = await marketplaceRef.get();
+
+      if (!snapshot.exists) {
+        print("Document doesn't exist.");
+        return [];
+      } else {
+        var data = snapshot.data() as Map<String, dynamic>?;
+
+        if (data == null || !data.containsKey('examples')) {
+          print("No examples field found.");
+          return [];
+        } else {
+          var examplesData = data['examples'] as List<dynamic>;
+          List<AgentFlowExample> examples = examplesData.map((item) => AgentFlowExample.fromFirestore(item as Map<String, dynamic>)).toList();
+          return examples;
+        }
+      }
+    } catch (e, stackTrace) {
+      print("Error fetching document: $e");
+      print("Stack trace: $stackTrace");
+      return [];
+    }
+  }
 }
+
