@@ -20,7 +20,9 @@ import 'cache_agent_flows.dart';
 class AgentFlowScreen extends StatefulWidget {
   AgentFlowModel agentFlowModel;
   DocumentReference? marketplaceReference;
-  AgentFlowScreen({super.key,required this.agentFlowModel,this.marketplaceReference});
+
+  AgentFlowScreen(
+      {super.key, required this.agentFlowModel, this.marketplaceReference});
 
   @override
   State<AgentFlowScreen> createState() => _AgentFlowScreenState();
@@ -34,7 +36,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
   bool isAgentLoading = false;
   String currentAgentName = "";
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _userInformationsController = TextEditingController();
+  final TextEditingController _userInformationsController =
+      TextEditingController();
   final FocusNode _textFieldFocusNode = FocusNode();
   UserModel? currentUser;
 
@@ -44,17 +47,36 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
   @override
   void initState() {
     super.initState();
+
     _getCurrentUser();
+    _connectToSocket();
     _loadExamples();
   }
 
   Future<void> _loadExamples() async {
-    List<AgentFlowExample> examples = await fetchExamples(widget.marketplaceReference!.id);
-    setState(() {
-      _examples = examples;
-      if (_examples.isNotEmpty) {
-        _selectedLabel = _examples[0].label; // Optionally set a default selected label
+    List<AgentFlowExample> examples =
+        await fetchExamples(widget.marketplaceReference!.id);
+    setState(() async {
+      bool isUserInMarketplace = widget.agentFlowModel.marketplaceUsers
+          ?.any((ref) => ref.id == UserService().getUserReference()?.id) ??
+          false;
+
+      if (!isUserInMarketplace) {
+        _examples = examples;
+        _userInformationsController.text = _examples.first.dummyQuestion!;
+        for (final item in _examples.first.dummyAnswer!) {
+          await Future.delayed(const Duration(seconds: 1));
+          setState(() {
+            agentReasoningList.add(item);
+            _scrollToBottom();
+          });
+
+          if (_examples.isNotEmpty) {
+            _selectedLabel = _examples[0].label;
+          }
+        }
       }
+      // _connectToSocket();
     });
   }
 
@@ -65,40 +87,10 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       _textFieldFocusNode.addListener(() {
         if (_textFieldFocusNode.hasFocus &&
             _userInformationsController.text.isNotEmpty &&
-            widget.agentFlowModel.agentFlowExamples != null &&
-            // widget.agentFlowModel.dummyAnswer != null &&
+            _examples.isNotEmpty &&
             currentUser?.authType != 'admin') {
           _textFieldFocusNode.unfocus();
           _showTrialDialog();
-        }
-      });
-
-      bool isUserInMarketplace = widget.agentFlowModel.marketplaceUsers?.any((ref) =>
-      ref.id == UserService().getUserReference()?.id) ?? false;
-
-      setState(() async {
-      /*  if (isUserInMarketplace) {
-          widget.agentFlowModel.dummyQuestion = null;
-          widget.agentFlowModel.dummyAnswer = null;
-        }*/
-
-        if (widget.agentFlowModel.agentFlowExamples != null &&
-            // widget.agentFlowModel.dummyAnswer != null &&
-            currentUser?.authType != 'admin') {
-          // _userInformationsController.text = widget.agentFlowModel.dummyQuestion!;
-        /*  for (final item in widget.agentFlowModel.dummyAnswer!) {
-            await Future.delayed(const Duration(seconds: 1));
-            setState(() {
-              agentReasoningList.add(item);
-              _scrollToBottom();
-            });
-          }*/
-        } else {
-          _connectToSocket();
-        }
-
-        if (currentUser?.authType == 'admin') {
-          _connectToSocket();
         }
       });
     }
@@ -135,7 +127,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       setState(() {
         isAgentLoading = true;
         currentAgentName = nextAgent.toString();
-        _scrollToBottom(); // Scroll to bottom when new agent is added
+        _scrollToBottom();
       });
     });
 
@@ -192,9 +184,18 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
           ),
-          title: const Text('Trial Version'),
+          title: const Text('Trial Version',
+            style: TextStyle(
+              color: Colors.black87,
+              fontFamily: 'Graphik',
+              fontSize: 20,
+            ),),
           content: const Text(
             'This is just a trial version of the agent flow. To use this agent flow, please contact the administrator.',
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 14,
+            ),
           ),
           actions: <Widget>[
             TextButton(
@@ -240,7 +241,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
   }
 
   void _handleSubmit() {
-    final TextEditingController queryController = TextEditingController(); // Controller for query input
+    final TextEditingController queryController =
+        TextEditingController(); // Controller for query input
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -248,12 +250,19 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
           ),
-          title: const Text('Add Information'),
+          title: const Text('Add Information',  style: TextStyle(
+            color: Colors.black87,
+            fontFamily: 'Graphik',
+            fontSize: 20,
+          ),),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                  'Please provide additional information for the admin.'),
+                  'Please provide additional information for the admin.',  style: TextStyle(
+                color: Colors.black87,
+                fontSize: 14,
+              ),),
               const SizedBox(height: 20),
               TextFormField(
                 maxLines: 3,
@@ -262,7 +271,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                   labelText: 'Enter your query',
                   border: OutlineInputBorder(),
                   labelStyle: TextStyle(
-                    fontSize: 12.0, // Adjust the font size of the label text
+                    fontSize: 12.0,
                   ),
                 ),
               ),
@@ -360,48 +369,55 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
             child: Text(
               widget.agentFlowModel.flowName,
               style: const TextStyle(
-                fontSize: 14, color: Colors.black87, fontFamily: 'Graphik',
+                fontSize: 14,
+                color: Colors.black87,
+                fontFamily: 'Graphik',
               ),
             ),
           ),
         ],
-
       ),
       body: Row(
         children: [
-          (widget.agentFlowModel.marketplaceUsers!.contains(UserService().getUserReference()) && widget.agentFlowModel.marketplaceUsers!=null) ?
-            Container(
-              width: 250,
-              padding: const EdgeInsets.only(top: 10),
-              child: Column(
-                children: [
-                  Container(
-                    width: 250,
-                    padding: const EdgeInsets.only(top: 10),
-                    color: AppColors.messageBgColor.withAlpha(50),
-                    child: Column(
-                      children: [
-                        CachedStreamBuilder(
-                          marketplaceId: widget.marketplaceReference!.id,
-                          onTap: (dummyQuestion, dummyAnswer) {
-                            setState(() {
-                              _userInformationsController.text = dummyQuestion;
-                              agentReasoningList = dummyAnswer
-                                  .map((item) => AgentReasoning.fromJson(item as Map<String, dynamic>))
-                                  .toList();
-                            });
-                          },
-                        )
-                      ],
-                    ),
+          (widget.agentFlowModel.marketplaceUsers!.contains(UserService().getUserReference()) &&
+                  widget.agentFlowModel.marketplaceUsers != null)
+              ? Container(
+                  width: 250,
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 250,
+                        padding: const EdgeInsets.only(top: 10),
+                        color: AppColors.messageBgColor.withAlpha(50),
+                        child: Column(
+                          children: [
+                            CachedStreamBuilder(
+                              marketplaceId: widget.marketplaceReference!.id,
+                              onTap: (dummyQuestion, dummyAnswer) {
+                                setState(() {
+                                  _userInformationsController.text = dummyQuestion;
+                                  agentReasoningList = dummyAnswer
+                                      .map((item) => AgentReasoning.fromJson(
+                                          item as Map<String, dynamic>))
+                                      .toList();
+                                });
+                              },
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ) : const SizedBox(),
+                )
+              : const SizedBox(),
           Expanded(
             child: Column(
               children: [
-                Container(color: AppColors.textFieldBorderColor, height: 1,),
+                Container(
+                  color: AppColors.textFieldBorderColor,
+                  height: 1,
+                ),
                 Expanded(
                   child: Container(
                     color: AppColors.backgroundColor,
@@ -423,18 +439,18 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                               hintText: "Enter your query here...",
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10.0),
-                                borderSide: const BorderSide(color: Colors.grey,
-                                    width: 1.0),
+                                borderSide: const BorderSide(
+                                    color: Colors.grey, width: 1.0),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10.0),
-                                borderSide: const BorderSide(color: Colors.grey,
-                                    width: 1.0),
+                                borderSide: const BorderSide(
+                                    color: Colors.grey, width: 1.0),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10.0),
-                                borderSide: const BorderSide(color: Colors.grey,
-                                    width: 1.0),
+                                borderSide: const BorderSide(
+                                    color: Colors.grey, width: 1.0),
                               ),
                             ),
                             validator: (value) {
@@ -452,11 +468,12 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            _examples.isNotEmpty ? DropdownButton<String>(
-                              value: _selectedLabel,
-                              items: _examples.map((example) {
-                                return DropdownMenuItem<String>(
-                                  value: example.label,
+                            _examples.isNotEmpty
+                                ? DropdownButton<String>(
+                                    value: _selectedLabel,
+                                    items: _examples.map((example) {
+                                      return DropdownMenuItem<String>(
+                                        value: example.label,
                                         child: Text(
                                           example.label.capitalize() ?? "",
                                           style: const TextStyle(
@@ -464,28 +481,36 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                                               color: Colors.black87),
                                         ),
                                       );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _selectedLabel = newValue;
-                                });
-                              },
-                            ) :const SizedBox(),
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        _selectedLabel = newValue;
+                                        var selectedExample = _examples.firstWhere((example) => example.label == newValue);
+                                        _userInformationsController.text = selectedExample.dummyQuestion!;
+                                        agentReasoningList = (selectedExample.dummyAnswer as List<dynamic>)
+                                            .map((item) => item as AgentReasoning)
+                                            .toList();
+                                        _textFieldFocusNode.unfocus();
+                                      });
+                                    },
+                                  )
+                                : const SizedBox(),
                             InkWell(
                               onTap: () async {
-                                if (widget.agentFlowModel.agentFlowExamples != null &&
-                                    // widget.agentFlowModel.dummyAnswer != null &&
+                                if (_examples.isNotEmpty &&
                                     currentUser?.authType != 'admin') {
                                   _showTrialDialog();
                                 } else {
-                                  if (_userInformationsController.text.isNotEmpty) {
+                                  if (_userInformationsController
+                                      .text.isNotEmpty) {
                                     sendQuery();
                                   }
                                 }
                               },
                               child: Container(
                                 height: 50,
-                                margin: const EdgeInsets.only(top: 15, bottom: 15),
+                                margin:
+                                    const EdgeInsets.only(top: 15, bottom: 15),
                                 alignment: Alignment.center,
                                 width: 80,
                                 decoration: BoxDecoration(
@@ -498,18 +523,19 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                                       offset: const Offset(0, 1),
                                     ),
                                   ],
-                                  borderRadius: const BorderRadius.all(Radius.circular(
-                                      10)),
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(10)),
                                 ),
                                 padding: const EdgeInsets.all(5),
                                 child: !isLoading
                                     ? const Text(
-                                  'Submit',
-                                  style: TextStyle(fontSize: 15, color: Colors.white),
-                                )
+                                        'Submit',
+                                        style: TextStyle(
+                                            fontSize: 15, color: Colors.white),
+                                      )
                                     : const CircularProgressIndicator(
-                                  color: Colors.white,
-                                ),
+                                        color: Colors.white,
+                                      ),
                               ),
                             ),
                           ],
@@ -554,8 +580,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Lottie.asset('assets/animations/next_agent_lottie.json', height: 35,
-              width: 35),
+          Lottie.asset('assets/animations/next_agent_lottie.json',
+              height: 35, width: 35),
           const SizedBox(width: 10),
           Text(
             'Loading details for $currentAgentName...',
@@ -579,7 +605,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         children: [
           Text(
             reasoning.agentName,
-            style: const TextStyle(color: Colors.black87,
+            style: const TextStyle(
+                color: Colors.black87,
                 fontSize: 20,
                 fontWeight: FontWeight.w700),
           ),
@@ -588,18 +615,21 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
           const SizedBox(height: 10),
           reasoning.messages?.isNotEmpty == true
               ? Column(
-            children: List.generate(reasoning.messages?.length ?? 0, (index) {
-              return Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: MarkdownBody(data: reasoning.messages![index],)
-              );
-            }),
-          )
+                  children:
+                      List.generate(reasoning.messages?.length ?? 0, (index) {
+                    return Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: MarkdownBody(
+                          data: reasoning.messages![index],
+                        ));
+                  }),
+                )
               : Text(
-            reasoning.instructions?.isEmpty == true ? "Finished" : reasoning
-                .instructions!,
-            style: const TextStyle(color: Colors.black87, fontSize: 16),
-          ),
+                  reasoning.instructions?.isEmpty == true
+                      ? "Finished"
+                      : reasoning.instructions!,
+                  style: const TextStyle(color: Colors.black87, fontSize: 16),
+                ),
         ],
       ),
     );
@@ -626,14 +656,17 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       );
 
       if (response.statusCode == 200) {
-
-        if(currentUser?.authType=='admin'){
-          updateOrCreateExamplesWithoutTransaction(widget.marketplaceReference!.id,
-              AgentFlowExample(createdAt: Timestamp.now(),
-                  dummyQuestion: _userInformationsController.text,
-                  dummyAnswer: agentReasoningList.map((e) => e.toJson()).toList(),
-                  label: _userInformationsController.text));
-        }else{
+        if (currentUser?.authType == 'admin') {
+          updateOrCreateExamplesWithoutTransaction(
+            widget.marketplaceReference!.id,
+            AgentFlowExample(
+              createdAt: Timestamp.now(),
+              dummyQuestion: _userInformationsController.text,
+              dummyAnswer: agentReasoningList.map((e) => e.toJson()).toList(),
+              label: _userInformationsController.text,
+            ),
+          );
+        } else {
           await FirebaseFirestore.instance
               .collection('marketplace')
               .doc(widget.marketplaceReference?.id)
@@ -654,43 +687,39 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
     }
   }
 
-  Future<void> updateOrCreateExamplesWithoutTransaction(String marketplaceId, AgentFlowExample newExample) async {
-
-    DocumentReference marketplaceRef = FirebaseFirestore.instance.collection('marketplace').doc(marketplaceId);
-
+  Future<void> updateOrCreateExamplesWithoutTransaction(
+      String marketplaceId, AgentFlowExample newExample) async {
+    DocumentReference marketplaceRef =
+        FirebaseFirestore.instance.collection('marketplace').doc(marketplaceId);
     try {
       DocumentSnapshot snapshot = await marketplaceRef.get();
 
       if (!snapshot.exists) {
-        print("Document doesn't exist. Creating a new document.");
         await marketplaceRef.set({
           'examples': [newExample.toFirestore()],
         });
       } else {
-        print("Document exists. Updating examples field.");
         var data = snapshot.data() as Map<String, dynamic>?;
 
         if (data == null || !data.containsKey('examples')) {
-          print("No examples field. Creating examples.");
           await marketplaceRef.update({
             'examples': [newExample.toFirestore()],
           });
         } else {
-          print("Appending to existing examples.");
           await marketplaceRef.update({
             'examples': FieldValue.arrayUnion([newExample.toFirestore()]),
           });
         }
       }
       print("Operation successful!");
-    } catch (e, stackTrace) {
+    } catch (e) {
       print("Error updating document: $e");
-      print("Stack trace: $stackTrace");
     }
   }
 
   Future<List<AgentFlowExample>> fetchExamples(String marketplaceId) async {
-    DocumentReference marketplaceRef = FirebaseFirestore.instance.collection('marketplace').doc(marketplaceId);
+    DocumentReference marketplaceRef =
+        FirebaseFirestore.instance.collection('marketplace').doc(marketplaceId);
 
     try {
       DocumentSnapshot snapshot = await marketplaceRef.get();
@@ -706,7 +735,10 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
           return [];
         } else {
           var examplesData = data['examples'] as List<dynamic>;
-          List<AgentFlowExample> examples = examplesData.map((item) => AgentFlowExample.fromFirestore(item as Map<String, dynamic>)).toList();
+          List<AgentFlowExample> examples = examplesData
+              .map((item) =>
+                  AgentFlowExample.fromFirestore(item as Map<String, dynamic>))
+              .toList();
           return examples;
         }
       }
@@ -717,4 +749,3 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
     }
   }
 }
-
