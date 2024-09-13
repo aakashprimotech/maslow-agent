@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lottie/lottie.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
-import 'package:maslow_agents/utils/timestamp_converter.dart';
+import 'package:maslow_agents/utils/progress_indictor_widget.dart';
 import 'package:socket_io_client/socket_io_client.dart' as Io;
 import 'package:http/http.dart' as http;
 import '../../model/notification.dart';
@@ -16,6 +16,7 @@ import 'agent_flow_example.dart';
 import 'agent_flow_model.dart';
 import 'agents_data_response.dart';
 import 'cache_agent_flows.dart';
+import 'collapasable_agent_list.dart';
 
 class AgentFlowScreen extends StatefulWidget {
   AgentFlowModel agentFlowModel;
@@ -345,7 +346,6 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         ),
       );
     } catch (e) {
-      print('Error saving information: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to save information.'),
@@ -464,6 +464,20 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                             maxLines: null,
                           ),
                         ),
+                        Container(
+                          height: 40,
+                          child: ProgressIndicatorWidget(
+                            steps: const [
+                              'one',
+                              'two',
+                              'three',
+                              'four',
+                              'five',
+                              'six',
+                              'seven'
+                            ],
+                          ),
+                        ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -541,7 +555,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                           ],
                         ),
                         Expanded(
-                          child: ListView.builder(
+                          child:CollapsibleList(agentReasoningList: agentReasoningList,)
+                          /*ListView.builder(
                             controller: _scrollController,
                             itemCount: agentReasoningList.length +
                                 (isAgentLoading ? 1 : 0),
@@ -555,7 +570,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                                 return const SizedBox.shrink();
                               }
                             },
-                          ),
+                          ),*/
                         ),
                       ],
                     ),
@@ -603,12 +618,17 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            reasoning.agentName,
-            style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 20,
-                fontWeight: FontWeight.w700),
+          Row(
+            children: [
+              Text(
+                reasoning.agentName,
+                style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700),
+              ),
+              const Icon(Icons.keyboard_arrow_down,size: 20,color: Colors.black87,)
+            ],
           ),
           const SizedBox(height: 10),
           Divider(color: Colors.grey.withAlpha(150)),
