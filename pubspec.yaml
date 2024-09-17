@@ -37,6 +37,8 @@ dependencies:
   animated_text_kit:
   shimmer: ^2.0.0
   flutter_screenutil:
+  dropdown_button2: ^2.3.9
+  easy_stepper:
 
 dev_dependencies:
   flutter_test:

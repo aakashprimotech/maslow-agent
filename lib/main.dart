@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
               builder: (context, snapshot) {
                 bool isLoggedIn = snapshot.data ?? false;
                 return MaterialApp(
-                  title: 'MaslowAgents',
+                  title: 'Maslow Agents',
                   debugShowCheckedModeBanner: false,
                   theme: ThemeData(
                     // Optional: Set a default font for the entire app

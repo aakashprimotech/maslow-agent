@@ -21,6 +21,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -65,46 +66,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return null;
     }
   }
-
-/*  void _signInWithEmailAndPassword() async {
-    try {
-      if (_formKey.currentState!.validate()) {
-        final String email = _emailController.text.trim();
-        final String password = _passwordController.text;
-
-        UserCredential userCredential =
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
-
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .get();
-
-        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-
-        await SessionManager.saveUser(UserModel(
-          uid: userCredential.user?.uid ?? '',
-          name: userData['displayName'] ?? '',
-          email: userCredential.user?.email ?? '',
-          authType: 'user',
-          primaryWorkSpace: (userData['primaryWorkSpace'] as DocumentReference?)?.id,
-        ));
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const UserHomePage()),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to sign in with Email and Password: $e';
-      });
-      context.showCustomSnackBar(_errorMessage);
-    }
-  }*/
 
   void _signInWithEmailAndPassword() async {
     try {

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:lottie/lottie.dart';
 import 'package:maslow_agents/presentation/agent_flows/agents_data_response.dart';
 
 class CollapsibleList extends StatefulWidget {
   final List<AgentReasoning> agentReasoningList;
   final bool isAgentLoading;
+  final String currentAgentName;
+
 
   CollapsibleList({
     required this.agentReasoningList,
     this.isAgentLoading = false,
+    this.currentAgentName = ''
   });
 
   @override
@@ -22,7 +26,6 @@ class _CollapsibleListState extends State<CollapsibleList> {
   @override
   void initState() {
     super.initState();
-    // Ensure the last item is expanded by default if it's not already in _expandedItems
     if (widget.agentReasoningList.isNotEmpty) {
       _expandedItems[widget.agentReasoningList.length - 1] = true;
     }
@@ -47,7 +50,6 @@ class _CollapsibleListState extends State<CollapsibleList> {
   }
 
   Widget _subtasks(int index, AgentReasoning reasoning) {
-    // Check if the current index is expanded
     final isExpanded = _expandedItems[index] ?? (index == widget.agentReasoningList.length - 1 ? true : false);
 
     return Container(
@@ -99,9 +101,7 @@ class _CollapsibleListState extends State<CollapsibleList> {
                   ),
                 );
               }),
-            )
-                : Text(
-              reasoning.instructions?.isEmpty == true
+            ) : Text(reasoning.instructions?.isEmpty == true
                   ? "Finished"
                   : reasoning.instructions!,
               style: const TextStyle(color: Colors.black87, fontSize: 16),
@@ -114,6 +114,29 @@ class _CollapsibleListState extends State<CollapsibleList> {
   }
 
   Widget _loadingIndicator() {
-    return Center(child: CircularProgressIndicator());
+    if(widget.currentAgentName!=''){
+        return Container(
+          margin: const EdgeInsets.only(top: 20, bottom: 20),
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: Colors.grey.withAlpha(50),
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset('assets/animations/next_agent_lottie.json',
+                  height: 35, width: 35),
+              const SizedBox(width: 10),
+              Text(
+                'Loading details for ${widget.currentAgentName}...',
+                style: const TextStyle(color: Colors.black87, fontSize: 16),
+              ),
+            ],
+          ),
+        );
+    }else{
+      return Center(child: CircularProgressIndicator());
+    }
   }
 }

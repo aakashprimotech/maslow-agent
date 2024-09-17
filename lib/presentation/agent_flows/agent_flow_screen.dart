@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lottie/lottie.dart';
@@ -22,8 +25,7 @@ class AgentFlowScreen extends StatefulWidget {
   AgentFlowModel agentFlowModel;
   DocumentReference? marketplaceReference;
 
-  AgentFlowScreen(
-      {super.key, required this.agentFlowModel, this.marketplaceReference});
+  AgentFlowScreen({super.key, required this.agentFlowModel, this.marketplaceReference});
 
   @override
   State<AgentFlowScreen> createState() => _AgentFlowScreenState();
@@ -37,13 +39,13 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
   bool isAgentLoading = false;
   String currentAgentName = "";
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _userInformationsController =
-      TextEditingController();
+  final TextEditingController _userInformationsController = TextEditingController();
   final FocusNode _textFieldFocusNode = FocusNode();
   UserModel? currentUser;
 
   List<AgentFlowExample> _examples = [];
   String? _selectedLabel;
+  final Map<int, bool> _expandedItems = {};
 
   @override
   void initState() {
@@ -59,8 +61,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         await fetchExamples(widget.marketplaceReference!.id);
     setState(() async {
       bool isUserInMarketplace = widget.agentFlowModel.marketplaceUsers
-          ?.any((ref) => ref.id == UserService().getUserReference()?.id) ??
-          false;
+          ?.any((ref) => ref.id == UserService().getUserReference()?.id) ?? false;
 
       if (!isUserInMarketplace) {
         _examples = examples;
@@ -76,6 +77,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
             _selectedLabel = _examples[0].label;
           }
         }
+        //expand last item of list
+        _expandedItems[agentReasoningList.length - 1] = true;
       }
       // _connectToSocket();
     });
@@ -134,8 +137,15 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
 
     socket.on('agentReasoning', (agentReasoning) async {
       try {
-        final jsonResult = jsonDecode(agentReasoning);
+        dynamic jsonResult;
+        if (agentReasoning is String) {
+          jsonResult = jsonDecode(agentReasoning);
+        } else {
+          jsonResult = agentReasoning;
+        }
+
         await Future.delayed(const Duration(seconds: 1));
+
         final newAgents = (jsonResult as List<dynamic>)
             .map<AgentReasoning>((e) => AgentReasoning.fromJson(e))
             .toList();
@@ -151,6 +161,28 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         });
       }
     });
+
+
+    /*   socket.on('agentReasoning', (agentReasoning) async {
+      try {
+        final jsonResult = jsonDecode(agentReasoning);
+        await Future.delayed(const Duration(seconds: 1));
+        final newAgents = (jsonResult as List<dynamic>)
+            .map<AgentReasoning>((e) => AgentReasoning.fromJson(e))
+            .toList();
+        print(newAgents.toString() +"responseResponing 1");
+        setState(() {
+          agentReasoningList = newAgents;
+          isAgentLoading = false;
+          _scrollToBottom();
+        });
+      } catch (e) {
+        print('parsingissuesareshowing'+e.toString());
+        setState(() {
+          isAgentLoading = false;
+        });
+      }
+    });*/
 
     socket.on('event', (data) {
       debugPrint('Event received: ${data.toString()}');
@@ -464,51 +496,101 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                             maxLines: null,
                           ),
                         ),
-                        Container(
+                        if(agentReasoningList.isNotEmpty)
+                        SizedBox(
                           height: 40,
                           child: ProgressIndicatorWidget(
-                            steps: const [
-                              'one',
-                              'two',
-                              'three',
-                              'four',
-                              'five',
-                              'six',
-                              'seven'
-                            ],
+                            steps: agentReasoningList
+                                .map((e) => e.agentName)
+                                .toList(),
+                            clickedStep: (value) {
+                              setState(() {
+                                if(_expandedItems[value]==true){
+                                  _expandedItems[value] =false;
+                                }else{
+                                  _expandedItems[value] =true;
+                                }
+                                // _expandedItems[value] =true;
+                                // _expandedItems[agentReasoningList.length - 1] = true;
+                              });
+                            },
                           ),
                         ),
+                        (_examples.isNotEmpty && !widget.agentFlowModel.flowName.toLowerCase().contains('agent')) ?
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20),
+                            child: Text(
+                              'Try out (${widget.agentFlowModel.flowName}) Agent Examples:',
+                              style: const TextStyle(fontSize: 12, color: Colors.black87,fontWeight: FontWeight.w600),
+                            ),
+                          ) :const SizedBox(),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            _examples.isNotEmpty
-                                ? DropdownButton<String>(
-                                    value: _selectedLabel,
-                                    items: _examples.map((example) {
-                                      return DropdownMenuItem<String>(
-                                        value: example.label,
-                                        child: Text(
-                                          example.label.capitalize() ?? "",
-                                          style: const TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.black87),
+                            if (_examples.isNotEmpty)
+                              SizedBox(
+                                width : 400,
+                                child: DropdownButtonFormField2<String>(
+                                  isExpanded: true,
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                  ),
+                                  hint: Text(
+                                    _examples.first.dummyQuestion ?? 'Select Any Example',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  items: _examples.map((example) {
+                                    return DropdownMenuItem<String>(
+                                      value: example.label,
+                                      child: Text(
+                                        example.label.capitalize() ?? "",
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black87,
                                         ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        _selectedLabel = newValue;
-                                        var selectedExample = _examples.firstWhere((example) => example.label == newValue);
-                                        _userInformationsController.text = selectedExample.dummyQuestion!;
-                                        agentReasoningList = (selectedExample.dummyAnswer as List<dynamic>)
-                                            .map((item) => item as AgentReasoning)
-                                            .toList();
-                                        _textFieldFocusNode.unfocus();
-                                      });
-                                    },
-                                  )
-                                : const SizedBox(),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      )
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      _selectedLabel = newValue;
+                                      var selectedExample = _examples.firstWhere((example) => example.label == newValue);
+                                      _userInformationsController.text = selectedExample.dummyQuestion!;
+                                      agentReasoningList = (selectedExample.dummyAnswer as List<dynamic>)
+                                          .map((item) => item as AgentReasoning)
+                                          .toList();
+                                      _textFieldFocusNode.unfocus();
+                                    });
+                                  },
+                                  onSaved: (value) {
+                                    _selectedLabel = value.toString();
+                                  },
+                                  buttonStyleData: const ButtonStyleData(
+                                    padding: EdgeInsets.only(right: 8),
+                                  ),
+                                  iconStyleData: const IconStyleData(
+                                    icon: Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Colors.black45,
+                                    ),
+                                    iconSize: 24,
+                                  ),
+                                  dropdownStyleData: DropdownStyleData(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                  ),
+                                  menuItemStyleData: const MenuItemStyleData(
+                                    padding: EdgeInsets.symmetric(horizontal: 16),
+                                  ),
+                                ),
+                              ) else const SizedBox(),
                             InkWell(
                               onTap: () async {
                                 if (_examples.isNotEmpty &&
@@ -555,22 +637,21 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                           ],
                         ),
                         Expanded(
-                          child:CollapsibleList(agentReasoningList: agentReasoningList,)
-                          /*ListView.builder(
+                            child: ListView.builder(
                             controller: _scrollController,
                             itemCount: agentReasoningList.length +
                                 (isAgentLoading ? 1 : 0),
                             itemBuilder: (context, index) {
                               if (index < agentReasoningList.length) {
                                 var reasoning = agentReasoningList[index];
-                                return _subtasks(reasoning);
+                                return _subtasks(reasoning,index);
                               } else if (isAgentLoading) {
                                 return _loadingIndicator();
                               } else {
                                 return const SizedBox.shrink();
                               }
                             },
-                          ),*/
+                          ),
                         ),
                       ],
                     ),
@@ -595,8 +676,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Lottie.asset('assets/animations/next_agent_lottie.json',
-              height: 35, width: 35),
+          Lottie.asset('assets/animations/next_agent_lottie.json', height: 35,
+              width: 35),
           const SizedBox(width: 10),
           Text(
             'Loading details for $currentAgentName...',
@@ -607,7 +688,10 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
     );
   }
 
-  Widget _subtasks(AgentReasoning reasoning) {
+  Widget _subtasks(AgentReasoning reasoning,int index) {
+
+    final isExpanded = _expandedItems[index] ?? (index == agentReasoningList.length - 1 ? true : false);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
@@ -615,41 +699,55 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         borderRadius: const BorderRadius.all(Radius.circular(10)),
       ),
       padding: const EdgeInsets.all(15),
-      child: Column(
+      child:  Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 reasoning.agentName,
                 style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700),
+                  color: Colors.black87,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              const Icon(Icons.keyboard_arrow_down,size: 20,color: Colors.black87,)
+              IconButton(
+                icon: Icon(
+                  isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  size: 20,
+                  color: Colors.black87,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _expandedItems[index] = !isExpanded;
+                  });
+                },
+              ),
             ],
           ),
-          const SizedBox(height: 10),
-          Divider(color: Colors.grey.withAlpha(150)),
-          const SizedBox(height: 10),
-          reasoning.messages?.isNotEmpty == true
-              ? Column(
-                  children:
-                      List.generate(reasoning.messages?.length ?? 0, (index) {
-                    return Padding(
-                        padding: const EdgeInsets.only(top: 20),
-                        child: MarkdownBody(
-                          data: reasoning.messages![index],
-                        ));
-                  }),
-                )
-              : Text(
-                  reasoning.instructions?.isEmpty == true
-                      ? "Finished"
-                      : reasoning.instructions!,
-                  style: const TextStyle(color: Colors.black87, fontSize: 16),
-                ),
+          if (isExpanded) ...[
+            const SizedBox(height: 8),
+            Divider(color: Colors.grey.withAlpha(150)),
+            const SizedBox(height: 8),
+            reasoning.messages?.isNotEmpty == true
+                ? Column(
+              children: List.generate(reasoning.messages?.length ?? 0, (msgIndex) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: MarkdownBody(
+                    data: reasoning.messages![msgIndex],
+                  ),
+                );
+              }),
+            ) : Text(reasoning.instructions?.isEmpty == true
+                ? "Finished"
+                : reasoning.instructions!,
+              style: const TextStyle(color: Colors.black87, fontSize: 16),
+            ),
+          ] else
+            const SizedBox.shrink(), // Optionally show a placeholder when collapsed
         ],
       ),
     );
@@ -687,6 +785,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
             ),
           );
         } else {
+          print({agentReasoningList.map((e) => e.toJson()).toList()}.toString() +"responseResponing4");
           await FirebaseFirestore.instance
               .collection('marketplace')
               .doc(widget.marketplaceReference?.id)
@@ -709,6 +808,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
 
   Future<void> updateOrCreateExamplesWithoutTransaction(
       String marketplaceId, AgentFlowExample newExample) async {
+    print(newExample.toString() +"responseResponing 3");
     DocumentReference marketplaceRef =
         FirebaseFirestore.instance.collection('marketplace').doc(marketplaceId);
     try {
