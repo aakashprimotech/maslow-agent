@@ -194,6 +194,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
     socket.disconnect();
     _textFieldFocusNode.dispose();
     _userInformationsController.dispose();
+    _scrollController.dispose();
+
     super.dispose();
   }
 
@@ -503,7 +505,21 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                             steps: agentReasoningList
                                 .map((e) => e.agentName)
                                 .toList(),
-                            clickedStep: (value) {
+                           /* clickedStep: (value) {
+                              setState(() {
+                                _expandedItems[value] = !_expandedItems[value]!;
+                              });
+
+                              // Calculate the scroll position
+                              double itemHeight = 100; // Adjust this based on your item height
+                              _scrollController.animateTo(
+                                value * itemHeight,
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            },*/
+
+                              clickedStep: (value) {
                               setState(() {
                                 if(_expandedItems[value]==true){
                                   _expandedItems[value] =false;
@@ -512,6 +528,13 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                                 }
                                 // _expandedItems[value] =true;
                                 // _expandedItems[agentReasoningList.length - 1] = true;
+
+                                double itemHeight = 100; // Adjust this based on your item height
+                                _scrollController.animateTo(
+                                  value * itemHeight,
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
                               });
                             },
                           ),
@@ -806,8 +829,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
     }
   }
 
-  Future<void> updateOrCreateExamplesWithoutTransaction(
-      String marketplaceId, AgentFlowExample newExample) async {
+  Future<void> updateOrCreateExamplesWithoutTransaction(String marketplaceId, AgentFlowExample newExample) async {
     print(newExample.toString() +"responseResponing 3");
     DocumentReference marketplaceRef =
         FirebaseFirestore.instance.collection('marketplace').doc(marketplaceId);
