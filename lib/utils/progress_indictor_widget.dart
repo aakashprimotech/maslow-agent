@@ -106,11 +106,28 @@ class _ProgressIndicatorWidgetState extends State<ProgressIndicatorWidget> with 
                                 height: _currentStep >= index
                                     ? circleDiameter
                                     : circleDiameter * 0.8,
-                                decoration: BoxDecoration(
+                               /* decoration: BoxDecoration(
                                   color: _currentStep >= index
-                                      ? AppColors.greenColorBtn
+                                      ? (widget.steps[index] != 'Supervisor')
+                                          ? AppColors.greenColorBtn
+                                          : Colors.black87
                                       : AppColors.greenColorBtn,
                                   shape: BoxShape.circle,
+                                ),*/
+                                decoration: BoxDecoration(
+                                  color: _currentStep >= index
+                                      ? (widget.steps[index] != 'Supervisor')
+                                      ? AppColors.maslowGreenColor
+                                      : null // Set to null to use the gradient below
+                                      : AppColors.maslowGreenColor,
+                                  shape: BoxShape.circle,
+                                  gradient: _currentStep >= index && widget.steps[index] == 'Supervisor'
+                                      ? const LinearGradient(
+                                    colors: [AppColors.maslowGreenColor, AppColors.maslowPinkColor],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                      : null, // Set to null when not using gradient
                                 ),
                               ),
                             ),
@@ -157,7 +174,7 @@ class LinePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final Paint completedPaint = Paint()
-      ..color = AppColors.greenColorBtn
+      ..color = AppColors.maslowGreenColor
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke;
 

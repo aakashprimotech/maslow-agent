@@ -429,12 +429,46 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                             CachedStreamBuilder(
                               marketplaceId: widget.marketplaceReference!.id,
                               onTap: (dummyQuestion, dummyAnswer) {
-                                setState(() {
+                                _userInformationsController.text =
+                                    dummyQuestion;
+                                agentReasoningList.clear();
+                                // Call the method to add items with delay
+                                _addItemsWithDelay(dummyAnswer);
+                              },
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ) /* Container(
+                  width: 250,
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 250,
+                        padding: const EdgeInsets.only(top: 10),
+                        color: AppColors.messageBgColor.withAlpha(50),
+                        child: Column(
+                          children: [
+                            CachedStreamBuilder(
+                              marketplaceId: widget.marketplaceReference!.id,
+                              onTap: (dummyQuestion, dummyAnswer) {
+                                setState(() async {
                                   _userInformationsController.text = dummyQuestion;
-                                  agentReasoningList = dummyAnswer
+                               *//*   agentReasoningList = dummyAnswer
                                       .map((item) => AgentReasoning.fromJson(
                                           item as Map<String, dynamic>))
-                                      .toList();
+                                      .toList();*//*
+                                  for (var item in dummyAnswer) {
+                                    // Wait for 1 second
+                                    await Future.delayed(Duration(seconds: 1));
+
+                                    // Add the item to the list
+                                    agentReasoningList.add(AgentReasoning.fromJson(item as Map<String, dynamic>));
+                                  }
+
                                 });
                               },
                             )
@@ -443,7 +477,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                       ),
                     ],
                   ),
-                )
+                )*/
               : const SizedBox(),
           Expanded(
             child: Column(
@@ -505,20 +539,6 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                             steps: agentReasoningList
                                 .map((e) => e.agentName)
                                 .toList(),
-                           /* clickedStep: (value) {
-                              setState(() {
-                                _expandedItems[value] = !_expandedItems[value]!;
-                              });
-
-                              // Calculate the scroll position
-                              double itemHeight = 100; // Adjust this based on your item height
-                              _scrollController.animateTo(
-                                value * itemHeight,
-                                duration: Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            },*/
-
                               clickedStep: (value) {
                               setState(() {
                                 if(_expandedItems[value]==true){
@@ -526,13 +546,10 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                                 }else{
                                   _expandedItems[value] =true;
                                 }
-                                // _expandedItems[value] =true;
-                                // _expandedItems[agentReasoningList.length - 1] = true;
-
-                                double itemHeight = 100; // Adjust this based on your item height
+                                double itemHeight = 100;
                                 _scrollController.animateTo(
                                   value * itemHeight,
-                                  duration: Duration(milliseconds: 300),
+                                  duration: const Duration(milliseconds: 300),
                                   curve: Curves.easeInOut,
                                 );
                               });
@@ -688,6 +705,20 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
     );
   }
 
+  // Method to add items with delay
+  Future<void> _addItemsWithDelay(List<dynamic> dummyAnswer) async {
+
+    for (var item in dummyAnswer) {
+      // Wait for 1 second
+      await Future.delayed(const Duration(seconds: 1));
+
+      // Update the list and call setState
+      setState(() {
+        agentReasoningList.add(AgentReasoning.fromJson(item as Map<String, dynamic>));
+      });
+    }
+  }
+
   Widget _loadingIndicator() {
     return Container(
       margin: const EdgeInsets.only(top: 20, bottom: 20),
@@ -770,7 +801,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
               style: const TextStyle(color: Colors.black87, fontSize: 16),
             ),
           ] else
-            const SizedBox.shrink(), // Optionally show a placeholder when collapsed
+            const SizedBox.shrink(),
         ],
       ),
     );
@@ -830,7 +861,6 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
   }
 
   Future<void> updateOrCreateExamplesWithoutTransaction(String marketplaceId, AgentFlowExample newExample) async {
-    print(newExample.toString() +"responseResponing 3");
     DocumentReference marketplaceRef =
         FirebaseFirestore.instance.collection('marketplace').doc(marketplaceId);
     try {

@@ -57,7 +57,6 @@ class _UserHomePageState extends State<UserHomePage> {
     'Third item',
     'Fourth item',
     'Fifth item',
-    // Add more items here
   ];
 
 
@@ -120,30 +119,6 @@ class _UserHomePageState extends State<UserHomePage> {
                 ),
               ),
             ),
-/*            Container(
-                alignment: Alignment.center,
-                margin: const EdgeInsets.only(right: 32),
-                height: 30,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(5),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      currentUser?.name!=null ? "${currentUser!.name.capitalize()}" :"N/A" ,
-                      style: const TextStyle(fontSize: 14, color: AppColors.primaryColor,fontWeight: FontWeight.w600
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    const CircleAvatar(
-                      backgroundImage: AssetImage('assets/images/user_placeholder.jpg'),
-                      radius: 13,
-                    ),
-                  ],
-                )
-            ),*/
             PopupMenuButton<String>(
               position: PopupMenuPosition.under,
               offset: Offset(-25, 15),  // Adjusts the position of the menu

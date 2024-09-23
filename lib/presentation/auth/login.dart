@@ -31,37 +31,66 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) {
+        setState(() {
+          _errorMessage = 'User cancelled the sign-in';
+        });
         return null;
       }
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
 
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
           .get();
 
-      Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+      if (!userDoc.exists) {
+        await FirebaseAuth.instance.signOut();
+        setState(() {
+          _errorMessage = 'User account does not exist. Please register.';
+        });
+        context.showCustomSnackBar(_errorMessage);
+        return null;
+      }
+
+      Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
+
+      if (userData != null) {
+        bool isBlocked = userData['isBlocked'] ?? false;
+
+        if (isBlocked) {
+          await FirebaseAuth.instance.signOut();
+          setState(() {
+            _errorMessage = 'Your account is blocked. Please contact support.';
+          });
+          context.showCustomSnackBar(_errorMessage);
+          return null;
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'User data not found';
+        });
+        return null;
+      }
 
       await SessionManager.saveUser(UserModel(
         uid: userCredential.user?.uid ?? '',
         name: userCredential.user?.displayName ?? '',
         email: userCredential.user?.email ?? '',
-        primaryWorkSpace:
-        (userData['primaryWorkSpace'] as DocumentReference?)?.id,
-        authType: 'user'
+        authType: 'user',
       ));
+
       return userCredential.user;
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to sign in with Google: $e';
+        print("Error: $e");
       });
       return null;
     }
@@ -73,20 +102,17 @@ class _LoginScreenState extends State<LoginScreen> {
         final String email = _emailController.text.trim();
         final String password = _passwordController.text;
 
-        // Sign in the user
         UserCredential userCredential =
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
 
-        // Fetch user data from Firestore
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
             .get();
 
-        // Check if the user is blocked
         Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
         bool isBlocked = userData['isBlocked'] ?? false;
 
@@ -99,7 +125,6 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        // Save user data if not blocked
         await SessionManager.saveUser(UserModel(
           uid: userCredential.user?.uid ?? '',
           name: userData['displayName'] ?? '',
@@ -108,7 +133,6 @@ class _LoginScreenState extends State<LoginScreen> {
           primaryWorkSpace: (userData['primaryWorkSpace'] as DocumentReference?)?.id,
         ));
 
-        // Navigate to the user home page
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const UserHomePage()),
@@ -286,10 +310,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     User? user = await _signInWithGoogle();
                     if (user != null) {
                       Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const AdminHomePage()),
-                      );
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const UserHomePage()));
                     } else {
                       // Failed sign in
                       context.showCustomSnackBar(_errorMessage);

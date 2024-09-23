@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:maslow_agents/utils/custom_snackbar.dart';
 
+import '../../service/shared_pref_service.dart';
 import '../../utils/colors.dart';
 import '../common/app_logo_horizontal.dart';
 import '../common/password_field.dart';
@@ -72,33 +73,51 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  Future<void> _signInWithGoogle() async {
+  Future<User?> _signUpWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser!.authentication;
+      if (googleUser == null) {
+        setState(() {
+          _errorMessage = 'User cancelled the sign-in';
+        });
+        return null;
+      }
 
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
 
-      await FirebaseFirestore.instance
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
-          .set({
-        'displayName': userCredential.user!.displayName,
-        'email': userCredential.user!.email,
-      });
+          .get();
 
-      context.showCustomSnackBar('User signed in with Google');
-    } on FirebaseAuthException catch (e) {
+      if (!userDoc.exists) {
+        await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+          'displayName': userCredential.user?.displayName,
+          'email': userCredential.user?.email,
+          'createdAt' :Timestamp.now(),
+          'isBlocked': false,
+        });
+        context.showCustomSnackBar('User registered successfully');
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
+
+      return userCredential.user;
+    } catch (e) {
       setState(() {
-        _errorMessage = e.message!;
+        _errorMessage = 'Failed to sign up with Google: $e';
+        print("Error: $e");
       });
+      return null;
     }
   }
 
@@ -275,7 +294,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   height: 25,
                 ),
                 ElevatedButton.icon(
-                  onPressed: _signInWithGoogle,
+                  onPressed: (){
+                    _signUpWithGoogle();
+                  },
                   icon: Image.asset(
                     'assets/images/iv_google.png',
                     height: 20,
