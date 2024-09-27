@@ -77,7 +77,6 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
             _selectedLabel = _examples[0].label;
           }
         }
-        //expand last item of list
         _expandedItems[agentReasoningList.length - 1] = true;
       }
       // _connectToSocket();
@@ -429,10 +428,8 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                             CachedStreamBuilder(
                               marketplaceId: widget.marketplaceReference!.id,
                               onTap: (dummyQuestion, dummyAnswer) {
-                                _userInformationsController.text =
-                                    dummyQuestion;
+                                _userInformationsController.text = dummyQuestion;
                                 agentReasoningList.clear();
-                                // Call the method to add items with delay
                                 _addItemsWithDelay(dummyAnswer);
                               },
                             )
@@ -441,43 +438,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                       ),
                     ],
                   ),
-                ) /* Container(
-                  width: 250,
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 250,
-                        padding: const EdgeInsets.only(top: 10),
-                        color: AppColors.messageBgColor.withAlpha(50),
-                        child: Column(
-                          children: [
-                            CachedStreamBuilder(
-                              marketplaceId: widget.marketplaceReference!.id,
-                              onTap: (dummyQuestion, dummyAnswer) {
-                                setState(() async {
-                                  _userInformationsController.text = dummyQuestion;
-                               *//*   agentReasoningList = dummyAnswer
-                                      .map((item) => AgentReasoning.fromJson(
-                                          item as Map<String, dynamic>))
-                                      .toList();*//*
-                                  for (var item in dummyAnswer) {
-                                    // Wait for 1 second
-                                    await Future.delayed(Duration(seconds: 1));
-
-                                    // Add the item to the list
-                                    agentReasoningList.add(AgentReasoning.fromJson(item as Map<String, dynamic>));
-                                  }
-
-                                });
-                              },
-                            )
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                )*/
+                )
               : const SizedBox(),
           Expanded(
             child: Column(
@@ -827,8 +788,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
         },
       );
 
-      if (response.statusCode == 200) {
-        if (currentUser?.authType == 'admin') {
+      if (currentUser?.authType == 'admin') {
           updateOrCreateExamplesWithoutTransaction(
             widget.marketplaceReference!.id,
             AgentFlowExample(
@@ -839,7 +799,17 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
             ),
           );
         } else {
-          print({agentReasoningList.map((e) => e.toJson()).toList()}.toString() +"responseResponing4");
+        if(!widget.agentFlowModel.marketplaceUsers!.contains(UserService().getUserReference())){
+          updateOrCreateExamplesWithoutTransaction(
+            widget.marketplaceReference!.id,
+            AgentFlowExample(
+              createdAt: Timestamp.now(),
+              dummyQuestion: _userInformationsController.text,
+              dummyAnswer: agentReasoningList.map((e) => e.toJson()).toList(),
+              label: _userInformationsController.text,
+            ),
+          );
+        }else{
           await FirebaseFirestore.instance
               .collection('marketplace')
               .doc(widget.marketplaceReference?.id)
@@ -850,8 +820,9 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
             'createdAt': FieldValue.serverTimestamp(),
           });
         }
+        }
       }
-    } catch (e) {
+     catch (e) {
       debugPrint('Error sending query: $e');
     } finally {
       setState(() {

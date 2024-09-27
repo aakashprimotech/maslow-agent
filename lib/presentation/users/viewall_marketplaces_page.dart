@@ -20,14 +20,6 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
   String _searchText = "";
   Timer? _debounce;
 
-  final List<String> _categories = [
-    'Education',
-    'Recruitment',
-    'Technology',
-    'Sports',
-    'Uncategorized'
-  ];
-
   @override
   void dispose() {
     _debounce?.cancel();
@@ -50,20 +42,43 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Select Category'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: _categories.map((category) {
-                return ListTile(
-                  title: Text(category),
-                  tileColor: _selectedCategory == category ? Colors.grey[200] : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedCategory = category;
-                    });
-                    Navigator.of(context).pop();
+          content: SizedBox(
+            width: 250,
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('marketplaceCategories').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No categories found.'));
+                }
+
+                final categories = snapshot.data!.docs;
+
+                return ListView.builder(
+                  itemCount: categories.length,
+                  shrinkWrap: true,
+                  itemBuilder: (context, index) {
+                    var categoryData = categories[index].data() as Map<String, dynamic>;
+                    return ListTile(
+                      title: Text(categoryData['name']),
+                      onTap: () {
+                        // Handle category selection here
+                        setState(() {
+                          _selectedCategory = categoryData['name'];
+                        });
+                        Navigator.of(context).pop();
+                      },
+                    );
                   },
                 );
-              }).toList(),
+              },
             ),
           ),
           actions: [
@@ -248,7 +263,7 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
 
                     var filteredAgentFlows = _filterAgentFlows(agentFlows);
 
-                    return Padding(
+                    return filteredAgentFlows.isNotEmpty ? Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 30),
                       child: GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -359,7 +374,7 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
                           );
                         },
                       ),
-                    );
+                    ) : const Center(child: Text('No marketplace found'),);
                   },
                 ),
               ),

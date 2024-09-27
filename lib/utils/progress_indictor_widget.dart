@@ -114,11 +114,11 @@ class _ProgressIndicatorWidgetState extends State<ProgressIndicatorWidget> with 
                                       : AppColors.greenColorBtn,
                                   shape: BoxShape.circle,
                                 ),*/
-                                decoration: BoxDecoration(
+                          /*      decoration: BoxDecoration(
                                   color: _currentStep >= index
                                       ? (widget.steps[index] != 'Supervisor')
                                       ? AppColors.maslowGreenColor
-                                      : null // Set to null to use the gradient below
+                                      : null
                                       : AppColors.maslowGreenColor,
                                   shape: BoxShape.circle,
                                   gradient: _currentStep >= index && widget.steps[index] == 'Supervisor'
@@ -126,9 +126,23 @@ class _ProgressIndicatorWidgetState extends State<ProgressIndicatorWidget> with 
                                     colors: [AppColors.maslowGreenColor, AppColors.maslowPinkColor],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
-                                  )
-                                      : null, // Set to null when not using gradient
-                                ),
+                                  ) : null,
+                                ),*/decoration: BoxDecoration(
+                                color: _currentStep >= index && widget.steps[index] != 'Supervisor'
+                                    ? AppColors.maslowGreenColor // Regular step color
+                                    : AppColors.maslowGreenColor, // No color if it is not active and not Supervisor
+                                shape: BoxShape.circle,
+                                gradient: widget.steps[index] == 'Supervisor'
+                                    ? const LinearGradient(
+                                  colors: [
+                                    AppColors.maslowGreenColor,
+                                    AppColors.maslowPinkColor
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ) : null, // Apply gradient only if step is 'Supervisor'
+                              ),
+
                               ),
                             ),
                           ],

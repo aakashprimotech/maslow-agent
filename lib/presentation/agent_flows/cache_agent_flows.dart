@@ -43,7 +43,6 @@ class _CachedStreamBuilderState extends State<CachedStreamBuilder> {
           return Container(height: 600, alignment: Alignment.center, child: const Text('No Data Available'));
         } else {
           var userDataList = snapshot.data!.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
-
           return ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -68,7 +67,7 @@ class _CachedStreamBuilderState extends State<CachedStreamBuilder> {
                     ),
                   ),
                   subtitle: Text(
-                    formatTimestamp(data['createdAt']),
+                    formatTimestamp(data['createdAt'] ?? Timestamp.now(),),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

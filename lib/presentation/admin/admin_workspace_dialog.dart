@@ -24,7 +24,8 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
   final TextEditingController _apiUrlController = TextEditingController();
   final TextEditingController _tokenHeader = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _authHeaderKeyController = TextEditingController();
+  final TextEditingController _authHeaderKeyController =
+      TextEditingController();
   UserModel? currentUser;
 
   //private marketplace keys
@@ -35,7 +36,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
   List<String> _emailList = [];
   final TextEditingController _emailController = TextEditingController();
   bool _emailExists = false;
-
+  List<String> _marketplaceCategories = [];
 
   Future<void> _runQuery(String email) async {
     _emailController.clear();
@@ -79,7 +80,6 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
     setState(() {});
   }
 
-
   final List<String> _categories = [
     'Education',
     'Recruitment',
@@ -94,13 +94,15 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
   void initState() {
     super.initState();
 
+    _fetchMarketplaceCategories();
     _btnText = widget.flowDocumentId == null ? "Save" : "Update";
     if (widget.agentFlowModel != null) {
-      _flowNameController.text = widget.agentFlowModel?.flowName ??"";
+      _flowNameController.text = widget.agentFlowModel?.flowName ?? "";
       _apiUrlController.text = widget.agentFlowModel?.apiURL ?? "";
       _socketsUrlController.text = widget.agentFlowModel?.socketUrl ?? "";
       _tokenHeader.text = widget.agentFlowModel?.authentication.token ?? "";
-      _authHeaderKeyController.text = widget.agentFlowModel?.authentication.key ?? "";
+      _authHeaderKeyController.text =
+          widget.agentFlowModel?.authentication.key ?? "";
       _descriptionController.text = widget.agentFlowModel?.description ?? "";
       _showInMarketplace = widget.agentFlowModel?.isPublished ?? false;
       _selectedCategory = widget.agentFlowModel?.category;
@@ -171,7 +173,8 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
     String flowName = _flowNameController.text.trim();
 
     if (socketUrl.isEmpty || apiUrl.isEmpty || flowName.isEmpty) {
-      context.showCustomSnackBar('Please provide Flow name,sockets url and API URL');
+      context.showCustomSnackBar(
+          'Please provide Flow name,sockets url and API URL');
       return;
     }
 
@@ -206,7 +209,8 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
     Navigator.pop(context);
   }
 
-  Future<List<DocumentReference>> _getUserReferences(List<String> emails) async {
+  Future<List<DocumentReference>> _getUserReferences(
+      List<String> emails) async {
     final userReferences = <DocumentReference>[];
 
     for (String email in emails) {
@@ -231,17 +235,14 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
     String authHeaderKey = _authHeaderKeyController.text.trim();
     String flowName = _flowNameController.text.trim();
 
-    if (socketUrl.isEmpty ||
-        apiUrl.isEmpty ||
-        flowName.isEmpty) {
+    if (socketUrl.isEmpty || apiUrl.isEmpty || flowName.isEmpty) {
       return;
     }
 
     final userRef = UserService().getUserReference();
     final userReferences = await _getUserReferences(_emailList);
 
-
-    if(userRef != null) {
+    if (userRef != null) {
       AgentFlowModel agentFlowModel = AgentFlowModel(
         createdBy: userRef,
         apiURL: apiUrl,
@@ -258,7 +259,6 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
           token: headerToken,
           type: selectedTokenType ?? "",
         ),
-
       );
 
       await FirebaseFirestore.instance
@@ -271,6 +271,21 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
     Navigator.pop(context);
   }
 
+  Future<void> _fetchMarketplaceCategories() async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('marketplaceCategories')
+          .get();
+      setState(() {
+        _marketplaceCategories = snapshot.docs
+            .map((doc) => doc['name'] as String)
+            .toList(); // Adjust according to your document structure
+      });
+    } catch (e) {
+      print('Error fetching categories: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -281,10 +296,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
         widget.agentFlowModel != null
             ? 'Update Agent Flow'
             : 'Create Agent Flow',
-        style: const TextStyle(
-          fontFamily: 'Graphik',
-          fontSize: 18
-        ),
+        style: const TextStyle(fontFamily: 'Graphik', fontSize: 18),
       ),
       contentPadding: const EdgeInsets.all(20.0),
       content: SingleChildScrollView(
@@ -306,10 +318,10 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                             labelText: 'Name',
                             border: OutlineInputBorder(),
                             labelStyle: TextStyle(
-                              fontSize: 12.0, // Adjust the font size of the label text
+                              fontSize:
+                                  12.0, // Adjust the font size of the label text
                             ),
                           ),
-
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -318,7 +330,8 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                             labelText: 'API URL',
                             border: OutlineInputBorder(),
                             labelStyle: TextStyle(
-                              fontSize: 12.0, // Adjust the font size of the label text
+                              fontSize:
+                                  12.0, // Adjust the font size of the label text
                             ),
                           ),
                         ),
@@ -329,7 +342,8 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                             labelText: 'Socket URL',
                             border: OutlineInputBorder(),
                             labelStyle: TextStyle(
-                              fontSize: 12.0, // Adjust the font size of the label text
+                              fontSize:
+                                  12.0, // Adjust the font size of the label text
                             ),
                           ),
                         ),
@@ -340,7 +354,8 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                             labelText: 'Description',
                             border: OutlineInputBorder(),
                             labelStyle: TextStyle(
-                              fontSize: 12.0, // Adjust the font size of the label text
+                              fontSize:
+                                  12.0, // Adjust the font size of the label text
                             ),
                           ),
                         ),
@@ -353,7 +368,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                         Wrap(
                           spacing: 10,
                           runSpacing: 10,
-                          children: _categories.map((category) {
+                          children: _marketplaceCategories.map((category) {
                             return GestureDetector(
                               onTap: () {
                                 setState(() {
@@ -361,7 +376,8 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                                 });
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 6),
                                 decoration: BoxDecoration(
                                   border: Border.all(
                                     color: _selectedCategory == category
@@ -380,44 +396,41 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                                     color: _selectedCategory == category
                                         ? AppColors.primaryColor
                                         : Colors.black,
-                                    fontSize: 12
+                                    fontSize: 12,
                                   ),
                                 ),
                               ),
                             );
                           }).toList(),
                         ),
-                        // const SizedBox(height: 25),
                       ],
                     ),
                   ),
                   const SizedBox(
                     width: 50,
                   ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      height: 150,
-                      width: 150,
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(75),
-                          border:
-                              Border.all(color: Colors.grey.withAlpha(100))),
-                      child: _imageUrl != null
-                          ? Image.network(_imageUrl!,
-                              height: double.infinity,
-                              width: double.infinity,
-                              fit: BoxFit.cover)
-                          : const Icon(
-                              Icons.star,
-                              size: 80,
-                            ),
-                    ),
+                  Container(
+                    height: 150,
+                    width: 150,
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(75),
+                        border: Border.all(color: Colors.grey.withAlpha(100))),
+                    child: _imageUrl != null
+                        ? Image.network(_imageUrl!,
+                            height: double.infinity,
+                            width: double.infinity,
+                            fit: BoxFit.cover)
+                        : const Icon(
+                            Icons.star,
+                            size: 80,
+                          ),
                   )
                 ],
               ),
-              const SizedBox(height: 10,),
+              const SizedBox(
+                height: 10,
+              ),
               Row(
                 children: [
                   Checkbox(
@@ -432,65 +445,76 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                   const Text('Show in marketplace'),
                 ],
               ),
-                Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Enter the emails of the people you want to give access to this marketplace.",
-                        style: TextStyle(fontSize: 14),
-                      ),
-                      const SizedBox(height: 10,),
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter email here..',
-                          border: const OutlineInputBorder(),
-                          labelStyle: const TextStyle(
-                            fontSize: 12.0,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.add),
-                            color: _emailExists ? Colors.green : Colors.grey,
-                            onPressed: _emailExists ? () {
-                              setState(() {
-                                _isQuerying = true;
-                              });
-                              _runQuery(_emailController.text).then((_) {
-                                setState(() {
-                                  _isQuerying = false;
-                                });
-                              });
-                            } : null,
-                          ),
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Enter the emails of the people you want to give access to this marketplace.",
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter email here..',
+                        border: const OutlineInputBorder(),
+                        labelStyle: const TextStyle(
+                          fontSize: 12.0,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.add),
+                          color: _emailExists ? Colors.green : Colors.grey,
+                          onPressed: _emailExists
+                              ? () {
+                                  setState(() {
+                                    _isQuerying = true;
+                                  });
+                                  _runQuery(_emailController.text).then((_) {
+                                    setState(() {
+                                      _isQuerying = false;
+                                    });
+                                  });
+                                } : null,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
               // List of emails
               if (_emailList.isNotEmpty)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: _emailList.map((email) => Align(
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      children: [
-                        Text(email),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: AppColors.primaryColor,size: 15,),
-                          onPressed: () {
-                            setState(() {
-                              _emailList.remove(email);
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  )).toList(),
+                  children: _emailList
+                      .map((email) => Align(
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              children: [
+                                Text(email),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: AppColors.primaryColor,
+                                    size: 15,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _emailList.remove(email);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ))
+                      .toList(),
                 ),
-              const SizedBox(height: 10,),
+              const SizedBox(
+                height: 10,
+              ),
               Row(
                 children: [
                   Checkbox(
@@ -549,7 +573,8 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                                     child: InputDecorator(
                                       decoration: const InputDecoration(
                                         labelText: 'Token Type',
-                                        contentPadding: EdgeInsets.symmetric(vertical: 0),
+                                        contentPadding:
+                                            EdgeInsets.symmetric(vertical: 0),
                                         border: OutlineInputBorder(),
                                       ),
                                       child: DropdownButtonHideUnderline(
@@ -557,20 +582,29 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                                           value: selectedTokenType,
                                           isExpanded: true,
                                           hint: const Padding(
-                                            padding: EdgeInsets.symmetric(horizontal: 8),
-                                            child: Text('Token Type', overflow: TextOverflow.ellipsis),
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8),
+                                            child: Text('Token Type',
+                                                overflow:
+                                                    TextOverflow.ellipsis),
                                           ),
                                           onChanged: (String? newValue) {
                                             setState(() {
                                               selectedTokenType = newValue;
                                             });
                                           },
-                                          items: authTokenTypes.map<DropdownMenuItem<String>>((String value) {
+                                          items: authTokenTypes
+                                              .map<DropdownMenuItem<String>>(
+                                                  (String value) {
                                             return DropdownMenuItem<String>(
                                               value: value,
                                               child: Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                                child: Text(value, overflow: TextOverflow.ellipsis),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8),
+                                                child: Text(value,
+                                                    overflow:
+                                                        TextOverflow.ellipsis),
                                               ),
                                             );
                                           }).toList(),
@@ -616,7 +650,7 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
                         ),
                       ],
                     )
-               : const SizedBox()
+                  : const SizedBox()
             ],
           ),
         ),
@@ -633,7 +667,8 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
         ),
         InkWell(
           onTap: () {
-            if (widget.flowDocumentId == null || widget.flowDocumentId!.isEmpty) {
+            if (widget.flowDocumentId == null ||
+                widget.flowDocumentId!.isEmpty) {
               _addWorkspace(_emailList);
             } else {
               updateWorkspace();
@@ -664,37 +699,6 @@ class _AdminWorkspaceDialogState extends State<AdminWorkspaceDialog> {
             ),
           ),
         ),
-
-        /*  InkWell(
-          onTap: (widget.flowDocumentId == null ||
-                  widget.flowDocumentId!.isEmpty == true)
-              ? addWorkspace
-              : updateWorkspace,
-          child: Container(
-            height: 30,
-            alignment: Alignment.center,
-            width: 80,
-            decoration: BoxDecoration(
-              color: AppColors.primaryColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 3,
-                  blurRadius: 7,
-                  offset: const Offset(0, 1), // changes position of shadow
-                ),
-              ],
-              borderRadius: const BorderRadius.all(
-                Radius.circular(10),
-              ),
-            ),
-            padding: const EdgeInsets.all(5),
-            child: Text(
-              _btnText!,
-              style: const TextStyle(fontSize: 15, color: Colors.white),
-            ),
-          ),
-        ),*/
       ],
     );
   }

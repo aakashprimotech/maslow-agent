@@ -17,6 +17,7 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   UserModel? currentUser;
+  DocumentReference? documentReference;
 
   @override
   void initState() {
@@ -67,7 +68,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
   }
 
-  Future<void> _updateMarketplaceUsers(DocumentReference agentFlowRef, DocumentReference userRef) async {
+  Future<void> _updateMarketplaceUsers(DocumentReference agentFlowRef, DocumentReference userRef, DocumentReference<Object?>? notificationRef) async {
     final workspaceSnapshot = await agentFlowRef.get();
 
     if (workspaceSnapshot.exists) {
@@ -87,15 +88,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
         });
       }
 
-      final notificationsQuery = FirebaseFirestore.instance
-          .collection('notifications')
-          .limit(1);
-
-      final querySnapshot = await notificationsQuery.get();
-      if (querySnapshot.docs.isNotEmpty) {
-        final notificationDoc = querySnapshot.docs.first;
-        await notificationDoc.reference.update({'status': true,'isAccepted' : true});
-      }
+      await notificationRef?.update({
+        'status': true,
+        'isAccepted': true,
+      });
 
     } else {
       throw Exception("Workspace not found.");
@@ -188,7 +184,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           } else if (marketplaceSnapshot.hasError) {
                             return Center(child: Text('Error: ${marketplaceSnapshot.error}'));
                           } else if (!marketplaceSnapshot.hasData) {
-                            return const Center(child: Text('Marketplace data not found'));
+                            return SizedBox();
                           } else {
                             final marketplaceSnapshotData = marketplaceSnapshot.data!;
                             return Container(
@@ -304,7 +300,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           } else if (marketplaceSnapshot.hasError) {
                             return Center(child: Text('Error: ${marketplaceSnapshot.error}'));
                           } else if (!marketplaceSnapshot.hasData) {
-                            return const Center(child: Text('Marketplace data not found'));
+                            return const SizedBox();
                           } else {
                             final marketplaceSnapshotData = marketplaceSnapshot.data!;
                             return Container(
@@ -419,7 +415,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             InkWell(
               onTap: () async {
-                await _updateMarketplaceUsers(notification.agentFlowRef, notification.userRef!);
+                await _updateMarketplaceUsers(notification.agentFlowRef, notification.userRef!,notification.notificationRef);
                 Navigator.of(context).pop();
               },
               child: Container(
