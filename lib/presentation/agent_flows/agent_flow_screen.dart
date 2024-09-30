@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lottie/lottie.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
@@ -63,7 +64,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       bool isUserInMarketplace = widget.agentFlowModel.marketplaceUsers
           ?.any((ref) => ref.id == UserService().getUserReference()?.id) ?? false;
 
-      if (!isUserInMarketplace) {
+      if (!isUserInMarketplace && examples.isNotEmpty) {
         _examples = examples;
         _userInformationsController.text = _examples.first.dummyQuestion!;
         for (final item in _examples.first.dummyAnswer!) {
@@ -77,7 +78,15 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
             _selectedLabel = _examples[0].label;
           }
         }
+
         _expandedItems[agentReasoningList.length - 1] = true;
+
+        if(agentReasoningList.isNotEmpty){
+          final AgentReasoning? agentToShowINPopup = agentReasoningList.where((agent) => agent.messages?.isNotEmpty == true && agent.instructions?.isEmpty == true).lastOrNull;
+          if(agentToShowINPopup != null){
+            _showLastItemDialog(agentToShowINPopup);
+          }
+        }
       }
       // _connectToSocket();
     });
@@ -154,34 +163,13 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
           isAgentLoading = false;
           _scrollToBottom();
         });
+
       } catch (e) {
         setState(() {
           isAgentLoading = false;
         });
       }
     });
-
-
-    /*   socket.on('agentReasoning', (agentReasoning) async {
-      try {
-        final jsonResult = jsonDecode(agentReasoning);
-        await Future.delayed(const Duration(seconds: 1));
-        final newAgents = (jsonResult as List<dynamic>)
-            .map<AgentReasoning>((e) => AgentReasoning.fromJson(e))
-            .toList();
-        print(newAgents.toString() +"responseResponing 1");
-        setState(() {
-          agentReasoningList = newAgents;
-          isAgentLoading = false;
-          _scrollToBottom();
-        });
-      } catch (e) {
-        print('parsingissuesareshowing'+e.toString());
-        setState(() {
-          isAgentLoading = false;
-        });
-      }
-    });*/
 
     socket.on('event', (data) {
       debugPrint('Event received: ${data.toString()}');
@@ -645,6 +633,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
                             itemBuilder: (context, index) {
                               if (index < agentReasoningList.length) {
                                 var reasoning = agentReasoningList[index];
+                                debugPrint("check list length: ${agentReasoningList.length - 1}");
                                 return _subtasks(reasoning,index);
                               } else if (isAgentLoading) {
                                 return _loadingIndicator();
@@ -674,10 +663,256 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       await Future.delayed(const Duration(seconds: 1));
 
       // Update the list and call setState
+      final agentReasoning = AgentReasoning.fromJson(item as Map<String, dynamic>);
+
       setState(() {
-        agentReasoningList.add(AgentReasoning.fromJson(item as Map<String, dynamic>));
+        agentReasoningList.add(agentReasoning);
       });
     }
+
+    if(agentReasoningList.isNotEmpty){
+      final AgentReasoning? agentToShowINPopup = agentReasoningList.where((agent) => agent.messages?.isNotEmpty == true && agent.instructions?.isEmpty == true).lastOrNull;
+      if(agentToShowINPopup != null){
+        _showLastItemDialog(agentToShowINPopup);
+      }
+    }
+  }
+
+  Widget _subtasks(AgentReasoning reasoning, int index) {
+    final isExpanded = _expandedItems[index] ?? (index == agentReasoningList.length - 1 ? true : false);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      decoration: BoxDecoration(
+        color: Colors.grey.withAlpha(50),
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      padding: const EdgeInsets.all(15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                reasoning.agentName,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  size: 20,
+                  color: Colors.black87,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _expandedItems[index] = !isExpanded;
+                  });
+                  /// Open dialog if this is the last item and it's being expanded
+                  if (index == agentReasoningList.length - 1 && !isExpanded) {
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      _showLastItemDialog(reasoning);
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+          // if(index == agentReasoningList.length - 1 && !isExpanded)...[
+          //   _showLastItemDialog(reasoning)
+          // ],
+          // Visibility(
+          //   visible: (index == agentReasoningList.length - 1 && !isExpanded),
+          //     child: _showLastItemDialog(reasoning)
+          //     ),
+          if (isExpanded) ...[
+            const SizedBox(height: 8),
+            Divider(color: Colors.grey.withAlpha(150)),
+            const SizedBox(height: 8),
+            reasoning.messages?.isNotEmpty == true
+                ? Column(
+              children: List.generate(reasoning.messages?.length ?? 0, (msgIndex) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: MarkdownBody(
+                    data: reasoning.messages![msgIndex],
+                  ),
+                );
+              }),
+            )
+                : Text(
+              reasoning.instructions?.isEmpty == true ? "Finished" : reasoning.instructions!,
+              style: const TextStyle(color: Colors.black87, fontSize: 16),
+            ),
+          ] else
+            const SizedBox.shrink(),
+        ],
+      ),
+    );
+  }
+
+
+// Method to show dialog with copy functionality
+  _showLastItemDialog(AgentReasoning reasoning) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10), // Set border radius here
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10), // Apply the same border radius
+            child: AlertDialog(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(reasoning.agentName),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    reasoning.messages?.isNotEmpty == true
+                        ? Column(
+                      children: List.generate(
+                          reasoning.messages?.length ?? 0, (msgIndex) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 20),
+                          child: MarkdownBody(data: reasoning.messages![msgIndex]),
+                        );
+                      }),
+                    )
+                        : Text(
+                      reasoning.instructions?.isEmpty == true
+                          ? "Finished"
+                          : reasoning.instructions!,
+                      style:
+                      const TextStyle(color: Colors.black87, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  child: const Text('Close'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    String contentToCopy = reasoning.messages?.isNotEmpty == true
+                        ? reasoning.messages!.join('\n')
+                        : (reasoning.instructions?.isEmpty == true
+                        ? "Finished"
+                        : reasoning.instructions!);
+
+                    Clipboard.setData(ClipboardData(text: contentToCopy));
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Text copied to clipboard')),
+                    );
+                  },
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Icon(Icons.copy, color: Colors.grey, size: 20),
+                      SizedBox(width: 10),
+                      Text('Copy Text'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+
+    /*showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(reasoning.agentName),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    onPressed: (){
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.close,color: Colors.grey,size: 20,)),
+                ),
+                reasoning.messages?.isNotEmpty == true
+                    ? Column(
+                  children: List.generate(reasoning.messages?.length ?? 0, (msgIndex) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Text(reasoning.messages![msgIndex]),
+                    );
+                  }),
+                )
+                    : Text(
+                  reasoning.instructions?.isEmpty == true ? "Finished" : reasoning.instructions!,
+                  style: const TextStyle(color: Colors.black87, fontSize: 16),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Close the dialog
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Copy text to clipboard
+                String contentToCopy = reasoning.messages?.isNotEmpty == true
+                    ? reasoning.messages!.join('\n')
+                    : (reasoning.instructions?.isEmpty == true ? "Finished" : reasoning.instructions!);
+
+                Clipboard.setData(ClipboardData(text: contentToCopy));
+
+                // Show feedback to the user
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Text copied to clipboard')),
+                );
+              },
+              child: const Row(
+                children: [
+                  Icon(Icons.copy,color: Colors.grey,size: 20),
+                  SizedBox(width: 10),
+                  Text('Copy Text'),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );*/
   }
 
   Widget _loadingIndicator() {
@@ -703,7 +938,9 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
     );
   }
 
-  Widget _subtasks(AgentReasoning reasoning,int index) {
+
+
+ /* Widget _subtasks(AgentReasoning reasoning,int index) {
 
     final isExpanded = _expandedItems[index] ?? (index == agentReasoningList.length - 1 ? true : false);
 
@@ -767,7 +1004,7 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       ),
     );
   }
-
+*/
   Future<void> sendQuery() async {
     setState(() {
       isLoading = true;
@@ -828,6 +1065,13 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
       setState(() {
         isLoading = false;
       });
+
+      if(agentReasoningList.isNotEmpty){
+        final AgentReasoning? agentToShowINPopup = agentReasoningList.where((agent) => agent.messages?.isNotEmpty == true && agent.instructions?.isEmpty == true).lastOrNull;
+        if(agentToShowINPopup != null){
+          _showLastItemDialog(agentToShowINPopup);
+        }
+      }
     }
   }
 

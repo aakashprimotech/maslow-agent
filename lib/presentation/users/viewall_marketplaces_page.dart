@@ -266,12 +266,13 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
                     return filteredAgentFlows.isNotEmpty ? Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 30),
                       child: GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 10.0,
-                          mainAxisSpacing: 10.0,
-                          childAspectRatio: (MediaQuery.of(context).size.width / 3) /
-                              (MediaQuery.of(context).size.height / 3.2),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          crossAxisSpacing: 8.0,
+                          mainAxisSpacing: 8.0,
+                          childAspectRatio: 1.8,
+                          // childAspectRatio: (MediaQuery.of(context).size.width / 3) /
+                          //     (MediaQuery.of(context).size.height / 3.2),
                         ),
                         itemCount: filteredAgentFlows.length,
                         itemBuilder: (context, index) {
@@ -313,7 +314,7 @@ class _ViewallMarketplacesPageState extends State<ViewallMarketplacesPage> {
                                           ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4.0),
+                                    const SizedBox(height: 10.0),
                                     Text(
                                       agentFlow.description,
                                       maxLines: 3,

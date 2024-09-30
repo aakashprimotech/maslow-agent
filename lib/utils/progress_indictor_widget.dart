@@ -106,43 +106,25 @@ class _ProgressIndicatorWidgetState extends State<ProgressIndicatorWidget> with 
                                 height: _currentStep >= index
                                     ? circleDiameter
                                     : circleDiameter * 0.8,
-                               /* decoration: BoxDecoration(
-                                  color: _currentStep >= index
-                                      ? (widget.steps[index] != 'Supervisor')
-                                          ? AppColors.greenColorBtn
-                                          : Colors.black87
-                                      : AppColors.greenColorBtn,
-                                  shape: BoxShape.circle,
-                                ),*/
-                          /*      decoration: BoxDecoration(
-                                  color: _currentStep >= index
-                                      ? (widget.steps[index] != 'Supervisor')
-                                      ? AppColors.maslowGreenColor
-                                      : null
+                                decoration: BoxDecoration(
+                                  color: _currentStep >= index &&
+                                          widget.steps[index] != 'Supervisor'
+                                      ? AppColors
+                                          .maslowGreenColor // Regular step color
                                       : AppColors.maslowGreenColor,
+                                  // No color if it is not active and not Supervisor
                                   shape: BoxShape.circle,
-                                  gradient: _currentStep >= index && widget.steps[index] == 'Supervisor'
+                                  gradient: widget.steps[index] == 'Supervisor'
                                       ? const LinearGradient(
-                                    colors: [AppColors.maslowGreenColor, AppColors.maslowPinkColor],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ) : null,
-                                ),*/decoration: BoxDecoration(
-                                color: _currentStep >= index && widget.steps[index] != 'Supervisor'
-                                    ? AppColors.maslowGreenColor // Regular step color
-                                    : AppColors.maslowGreenColor, // No color if it is not active and not Supervisor
-                                shape: BoxShape.circle,
-                                gradient: widget.steps[index] == 'Supervisor'
-                                    ? const LinearGradient(
-                                  colors: [
-                                    AppColors.maslowGreenColor,
-                                    AppColors.maslowPinkColor
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ) : null, // Apply gradient only if step is 'Supervisor'
-                              ),
-
+                                          colors: [
+                                            AppColors.maslowGreenColor,
+                                            AppColors.maslowPinkColor
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        )
+                                      : null, // Apply gradient only if step is 'Supervisor'
+                                ),
                               ),
                             ),
                           ],

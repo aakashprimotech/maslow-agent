@@ -51,15 +51,6 @@ class _UserHomePageState extends State<UserHomePage> {
     });
   }
 
-  final List<String> strings = [
-    'First item',
-    'Second item',
-    'Third item',
-    'Fourth item',
-    'Fifth item',
-  ];
-
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -121,7 +112,7 @@ class _UserHomePageState extends State<UserHomePage> {
             ),
             PopupMenuButton<String>(
               position: PopupMenuPosition.under,
-              offset: Offset(-25, 15),  // Adjusts the position of the menu
+              offset: const Offset(-25, 15),  // Adjusts the position of the menu
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10.0),
               ),
@@ -250,7 +241,7 @@ class _UserHomePageState extends State<UserHomePage> {
                                   } else if (snapshot.hasError) {
                                     return Center(child: Text('Error: ${snapshot.error}'));
                                   } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                                    return Center(child: Text('No items found.'));
+                                    return const Center(child: Text('No items found.'));
                                   }
 
                                   var filteredDocs = snapshot.data!.docs;
@@ -274,7 +265,7 @@ class _UserHomePageState extends State<UserHomePage> {
                                                 borderRadius: BorderRadius.circular(150),
                                               ),
                                             ),
-                                            SizedBox(width: 10),
+                                            const SizedBox(width: 10),
                                             Text(
                                               agentFlows[index].flowName,
                                               style: const TextStyle(
@@ -322,7 +313,7 @@ class _UserHomePageState extends State<UserHomePage> {
                                   } else if (snapshot.hasError) {
                                     return Center(child: Text('Error: ${snapshot.error}'));
                                   } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                                    return Center(child: Text('No items found.'));
+                                    return const Center(child: Text('No items found.'));
                                   }
 
                                   var filteredDocs = snapshot.data!.docs.where((doc) {
@@ -361,7 +352,7 @@ class _UserHomePageState extends State<UserHomePage> {
                                                 borderRadius: BorderRadius.circular(150),
                                               ),
                                             ),
-                                            SizedBox(width: 10),
+                                            const SizedBox(width: 10),
                                             Text(
                                               agentFlows[index].flowName,
                                               style: const TextStyle(

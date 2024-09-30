@@ -207,10 +207,14 @@ class _ViewAllMyagentsState extends State<ViewAllMyagents> {
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: GridView.builder(
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
+                     /*       crossAxisCount: 3,
                             crossAxisSpacing: 16.0,
                             mainAxisSpacing: 16.0,
-                            childAspectRatio: 1.5 / 0.7,
+                            childAspectRatio: 1.5 / 0.7,*/
+                            crossAxisCount: 4,
+                            crossAxisSpacing: 8.0,
+                            mainAxisSpacing: 8.0,
+                            childAspectRatio: 1.8,
                           ),
                           itemCount: 3,
                           itemBuilder: (context, index) {
@@ -282,7 +286,7 @@ class _ViewAllMyagentsState extends State<ViewAllMyagents> {
                       child: GridView.builder(
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 4,
-                          crossAxisSpacing: 8.0,
+                          crossAxisSpacing: 1.0,
                           mainAxisSpacing: 8.0,
                           childAspectRatio: 1.8,
                         ),

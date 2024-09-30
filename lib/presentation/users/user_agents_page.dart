@@ -138,7 +138,7 @@ class UserAgentsPage extends StatelessWidget {
                     return GridView.builder(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
-                        crossAxisSpacing: 8.0,
+                        crossAxisSpacing: 1.0,
                         mainAxisSpacing: 8.0,
                         childAspectRatio: (MediaQuery.of(context).size.width / 3) / (MediaQuery.of(context).size.height / 2.8),
                       ),
@@ -291,7 +291,7 @@ class UserAgentsPage extends StatelessWidget {
                       return GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 4,
-                          crossAxisSpacing: 8.0,
+                          crossAxisSpacing: 1.0,
                           mainAxisSpacing: 8.0,
                           childAspectRatio: (MediaQuery.of(context).size.width / 3) / (MediaQuery.of(context).size.height / 2.8),
                         ),
@@ -367,7 +367,7 @@ class UserAgentsPage extends StatelessWidget {
                     return GridView.builder(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
-                        crossAxisSpacing: 8.0,
+                        crossAxisSpacing: 1.0,
                         mainAxisSpacing: 8.0,
                         childAspectRatio: 1.8,
                       ),

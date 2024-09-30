@@ -345,7 +345,7 @@ class _UsersMarketplaceScreenState extends State<UsersMarketplaceScreen> {
                                               ),
                                           ],
                                         ),
-                                        const SizedBox(height: 4.0),
+                                        const SizedBox(height: 10.0),
                                         Text(
                                           agentFlow.description,
                                           maxLines: 3,
