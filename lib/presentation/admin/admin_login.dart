@@ -44,12 +44,31 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
         Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
 
+        if (userData != null) {
+          bool isBlocked = userData['isBlocked'] ?? false;
+
+          if (isBlocked) {
+            await FirebaseAuth.instance.signOut();
+            setState(() {
+              _errorMessage = 'Your account is blocked. Please contact support.';
+            });
+            context.showCustomSnackBar(_errorMessage);
+            return null;
+          }
+        } else {
+          setState(() {
+            _errorMessage = 'User data not found';
+          });
+          return null;
+        }
+
         await SessionManager.saveUser(UserModel(
           uid: userCredential.user?.uid ?? '',
           name: userData['displayName'] ?? '',
           email: userCredential.user?.email ?? '',
           authType: 'admin'
         ));
+        await SessionManager.saveAdminRole(userData['adminRole']);
 
         Navigator.pushReplacement(
           context,

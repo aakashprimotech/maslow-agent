@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:maslow_agents/presentation/admin/admin_login.dart';
+import 'package:maslow_agents/presentation/admin/admin_users.dart';
 import 'package:maslow_agents/presentation/users_marketplace/users_marketplace_screen.dart';
 import 'package:maslow_agents/utils/captalize_string.dart';
 import '../../model/user.dart';
@@ -7,7 +8,8 @@ import '../../service/shared_pref_service.dart';
 import '../../utils/colors.dart';
 import '../common/user_popup_menu.dart';
 import '../notification/notification_screen.dart';
-import 'admin_users.dart';
+import 'admin_create_dialog.dart';
+import 'users_page.dart';
 import 'admin_workspace_dialog.dart';
 
 class AdminHomePage extends StatefulWidget {
@@ -20,11 +22,20 @@ class AdminHomePage extends StatefulWidget {
 class _AdminHomePageState extends State<AdminHomePage> {
   int _selectedIndex = 0;
   UserModel? currentUser;
+  String? adminRole;
+
+  Future<void> _checkAdminRole() async {
+    final role = await SessionManager.getAdminRole();
+    setState(() {
+      adminRole = role;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     _getCurrentUser();
+    _checkAdminRole();
   }
 
   Future<void> _getCurrentUser() async {
@@ -37,11 +48,13 @@ class _AdminHomePageState extends State<AdminHomePage> {
   final List<IconData> _pageIcons = [
     Icons.home,
     Icons.person,
+    Icons.admin_panel_settings,
   ];
 
   final List<String> _pageTitles = [
     'Home',
     'Users',
+    'Admins',
   ];
 
   void _onItemTapped(int index) {
@@ -62,8 +75,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           backgroundColor: AppColors.messageBgColor.withAlpha(50),
           title: Image.asset('assets/images/maslow_logo.png', height: 22),
           actions: [
-            _selectedIndex == 0
-                ? Container(
+            _selectedIndex == 0 ? Container(
               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               child: InkWell(
                 onTap: () {
@@ -106,8 +118,54 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   ),
                 ),
               ),
-            )
-                : const SizedBox(),
+            ) : const SizedBox(),
+            if (adminRole == "admin")
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                child: InkWell(
+                  onTap: () {
+                    showDialog<void>(
+                      context: context,
+                      builder: (context) {
+                        return const AdminCreateDialog();
+                      },
+                    );
+                  },
+                  child: Container(
+                    height: 30,
+                    decoration: const BoxDecoration(
+                      color: AppColors.createWorkspaceAppBarBtnColor,
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(5),
+                      ),
+                    ),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 15),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Add New Admin',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: 5),
+                          Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+
             Container(
               alignment: Alignment.center,
               margin: const EdgeInsets.only(right: 10),
@@ -128,6 +186,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 ),
               ),
             ),
+
             Container(
               alignment: Alignment.center,
               height: 30,
@@ -273,7 +332,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
       case 0:
         return const UsersMarketplaceScreen();
       case 1:
-        return const AdminUsersPage();
+        return const UsersPage();
+        case 2:
+        return const AdminUsers();
       default:
         return const Center(child: Text('Logout Page'));
     }

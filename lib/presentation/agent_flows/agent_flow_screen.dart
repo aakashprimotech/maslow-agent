@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
@@ -21,6 +22,12 @@ import 'agent_flow_model.dart';
 import 'agents_data_response.dart';
 import 'cache_agent_flows.dart';
 import 'collapasable_agent_list.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'dart:html' as html;
+
+
 
 class AgentFlowScreen extends StatefulWidget {
   AgentFlowModel agentFlowModel;
@@ -755,8 +762,16 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
     );
   }
 
+  String sanitizeMarkdown(String text) {
+    return text
+        .replaceAll(RegExp(r'\*'), '')  // Remove asterisks
+        .replaceAll(RegExp(r'\#'), '')  // Remove hashes
+        .replaceAllMapped(RegExp(r'_(.*?)_'), (match) => match[1] ?? '')  // Remove italics (underscores)
+        .replaceAllMapped(RegExp(r'\~(.*?)\~'), (match) => match[1] ?? '')  // Remove strikethrough (tildes)
+        .replaceAllMapped(RegExp(r'\[(.*?)\]\((.*?)\)'), (match) => match[1] ?? '')  // Remove links
+        .trim();  // Trim any leading or trailing whitespace
+  }
 
-// Method to show dialog with copy functionality
   _showLastItemDialog(AgentReasoning reasoning) {
     showDialog(
       context: context,
@@ -765,155 +780,195 @@ class _AgentFlowScreenState extends State<AgentFlowScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10), // Set border radius here
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10), // Apply the same border radius
-            child: AlertDialog(
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(reasoning.agentName),
-                  IconButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    icon: const Icon(
-                      Icons.close,
-                      color: Colors.grey,
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.8,
+                maxHeight: MediaQuery.of(context).size.height * 0.8 // Set a reasonable max width for the dialog
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10), // Apply the same border radius
+              child: AlertDialog(
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    reasoning.messages?.isNotEmpty == true
-                        ? Column(
-                      children: List.generate(
-                          reasoning.messages?.length ?? 0, (msgIndex) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 20),
-                          child: MarkdownBody(data: reasoning.messages![msgIndex]),
-                        );
-                      }),
-                    )
-                        : Text(
-                      reasoning.instructions?.isEmpty == true
-                          ? "Finished"
-                          : reasoning.instructions!,
-                      style:
-                      const TextStyle(color: Colors.black87, fontSize: 16),
+                    Flexible(
+                      child: Text(reasoning.agentName, overflow: TextOverflow.ellipsis),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                  },
-                  child: const Text('Close'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    String contentToCopy = reasoning.messages?.isNotEmpty == true
-                        ? reasoning.messages!.join('\n')
-                        : (reasoning.instructions?.isEmpty == true
-                        ? "Finished"
-                        : reasoning.instructions!);
-
-                    Clipboard.setData(ClipboardData(text: contentToCopy));
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Text copied to clipboard')),
-                    );
-                  },
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.copy, color: Colors.grey, size: 20),
-                      SizedBox(width: 10),
-                      Text('Copy Text'),
+                      reasoning.messages?.isNotEmpty == true
+                          ? Column(
+                        children: List.generate(
+                            reasoning.messages?.length ?? 0, (msgIndex) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 20),
+                            child: MarkdownBody(data : reasoning.messages![msgIndex] ?? ""),
+                          );
+                        }),
+                      )
+                          : Text(
+                        reasoning.instructions?.isEmpty == true
+                            ? "Finished"
+                            : reasoning.instructions!,
+                        style: const TextStyle(color: Colors.black87, fontSize: 16),
+                      ),
                     ],
                   ),
                 ),
-              ],
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      String contentToCopy = reasoning.messages?.isNotEmpty == true
+                          ? reasoning.messages!.join('\n')
+                          : (reasoning.instructions?.isEmpty == true ? "Finished" : reasoning.instructions!);
+
+                      Clipboard.setData(ClipboardData(text: sanitizeMarkdown(contentToCopy)));
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Text copied to clipboard')),
+                      );
+                    },
+                    child: const Icon(Icons.copy, color: Colors.grey, size: 20),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      String contentToDownload = reasoning.messages?.isNotEmpty == true
+                          ? reasoning.messages!.join('\n')
+                          : (reasoning.instructions?.isEmpty == true ? "Finished" : reasoning.instructions!);
+
+                      await _downloadAsPdf(sanitizeMarkdown(contentToDownload));
+                    },
+                    child: const Icon(Icons.download, color: Colors.grey, size: 20),
+                  ),
+                ],
+              ),
             ),
           ),
         );
       },
     );
-
-
-    /*showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(reasoning.agentName),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    onPressed: (){
-                      Navigator.of(context).pop();
-                    },
-                    icon: const Icon(Icons.close,color: Colors.grey,size: 20,)),
-                ),
-                reasoning.messages?.isNotEmpty == true
-                    ? Column(
-                  children: List.generate(reasoning.messages?.length ?? 0, (msgIndex) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 20),
-                      child: Text(reasoning.messages![msgIndex]),
-                    );
-                  }),
-                )
-                    : Text(
-                  reasoning.instructions?.isEmpty == true ? "Finished" : reasoning.instructions!,
-                  style: const TextStyle(color: Colors.black87, fontSize: 16),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                // Close the dialog
-                Navigator.of(context).pop();
-              },
-              child: const Text('Close'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Copy text to clipboard
-                String contentToCopy = reasoning.messages?.isNotEmpty == true
-                    ? reasoning.messages!.join('\n')
-                    : (reasoning.instructions?.isEmpty == true ? "Finished" : reasoning.instructions!);
-
-                Clipboard.setData(ClipboardData(text: contentToCopy));
-
-                // Show feedback to the user
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Text copied to clipboard')),
-                );
-              },
-              child: const Row(
-                children: [
-                  Icon(Icons.copy,color: Colors.grey,size: 20),
-                  SizedBox(width: 10),
-                  Text('Copy Text'),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );*/
   }
+
+  Future<void> _downloadAsPdf(String content) async {
+    final pdf = pw.Document();
+
+    // Convert the Markdown content to PDF widgets
+    List<pw.Widget> markdownWidgets = _convertMarkdownToWidgets(content);
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start, // Align text to the left
+          children: markdownWidgets,
+        ),
+      ),
+    );
+
+    try {
+      final Uint8List pdfData = await pdf.save();
+      final blob = html.Blob([pdfData], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', 'Agent Result.pdf')
+        ..click();
+
+      html.Url.revokeObjectUrl(url);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('PDF downloaded successfully')),
+      );
+    } catch (e) {
+      print("Error saving PDF: ${e.toString()}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save PDF: $e')),
+      );
+    }
+  }
+
+  List<pw.Widget> _convertMarkdownToWidgets(String content) {
+    final List<pw.Widget> widgets = [];
+
+    // Split content into lines
+    final lines = content.split('\n');
+
+    for (String line in lines) {
+      // Handle headers
+      if (line.startsWith('# ')) {
+        widgets.add(pw.Text(line.substring(2), style: pw.TextStyle(fontSize: 30, fontWeight: pw.FontWeight.bold)));
+      } else if (line.startsWith('## ')) {
+        widgets.add(pw.Text(line.substring(3), style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)));
+      } else if (line.startsWith('### ')) {
+        widgets.add(pw.Text(line.substring(4), style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)));
+      } else if (line.startsWith('*') || line.startsWith('_')) {
+        // Handle italics
+        widgets.add(pw.Text(line.replaceAll(RegExp(r'[\*_]+'), ''), style: pw.TextStyle(fontStyle: pw.FontStyle.italic)));
+      } else if (line.startsWith('**') || line.startsWith('__')) {
+        // Handle bold
+        widgets.add(pw.Text(line.replaceAll(RegExp(r'[\*\_]+'), ''), style: pw.TextStyle(fontWeight: pw.FontWeight.bold)));
+      } else if (line.isNotEmpty) {
+        // Handle normal text
+        widgets.add(pw.Text(line));
+      }
+
+      // Add spacing between lines for readability
+      widgets.add(pw.SizedBox(height: 8)); // Increase spacing for better readability
+    }
+
+    return widgets;
+  }
+/*  Future<void> _downloadAsPdf(String content) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.Center(
+          child: pw.Text(content, style: pw.TextStyle(fontSize: 16)),
+        ),
+      ),
+    );
+
+    try {
+      // Generate the PDF data
+      final Uint8List pdfData = await pdf.save();
+
+      // Create a blob from the data
+      final blob = html.Blob([pdfData], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      // Create a link element and trigger the download
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', 'agent_reasoning.pdf')
+        ..click();
+
+      // Clean up
+      html.Url.revokeObjectUrl(url);
+
+      // Notify the user of successful download
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF downloaded successfully')),
+      );
+    } catch (e) {
+      print("Error saving PDF: ${e.toString()}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save PDF: $e')),
+      );
+    }
+  }*/
 
   Widget _loadingIndicator() {
     return Container(

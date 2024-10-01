@@ -6,14 +6,14 @@ import 'package:shimmer/shimmer.dart';
 import '../../utils/colors.dart';
 import '../common/nothing_to_show.dart';
 
-class AdminUsersPage extends StatefulWidget {
-  const AdminUsersPage({super.key});
+class UsersPage extends StatefulWidget {
+  const UsersPage({super.key});
 
   @override
-  _AdminUsersPageState createState() => _AdminUsersPageState();
+  _UsersPageState createState() => _UsersPageState();
 }
 
-class _AdminUsersPageState extends State<AdminUsersPage> with SingleTickerProviderStateMixin {
+class _UsersPageState extends State<UsersPage> with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   String _searchText = '';
   late TabController _tabController;
@@ -113,7 +113,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> with SingleTickerProvid
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return ListView.builder(
-              itemCount: 6, // Number of shimmer items
+              itemCount: 6,
               itemBuilder: (context, index) {
                 return Shimmer.fromColors(
                   baseColor: Colors.grey[300]!,
@@ -164,7 +164,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> with SingleTickerProvid
               String userName = userData['displayName'] ?? 'No Name';
               String userEmail = userData['email'] ?? 'No Email';
               String userImage = userData['profileImage'] ?? 'assets/images/user_placeholder.jpg';
-              bool isBlocked = userData['isBlocked'] ?? false; // Check if user is blocked
+              bool isBlocked = userData['isBlocked'] ?? false;
 
               return ListTile(
                 contentPadding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 16.0),

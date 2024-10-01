@@ -39,6 +39,8 @@ dependencies:
   flutter_screenutil:
   dropdown_button2: ^2.3.9
   easy_stepper:
+  pdf:
+  universal_html:
 
 dev_dependencies:
   flutter_test:
